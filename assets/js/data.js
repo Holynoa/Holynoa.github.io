@@ -2,6 +2,8 @@
    HOLYNOA, all site content lives here.
    To edit a project: change the text below and save.
    To add an image: put the file in assets/img/ and add its name to "gallery".
+   "obj" is the floating object on the home page (assets/obj/);
+   "cm" is its real-world width, so everything keeps the same scale.
    ============================================================ */
 
 window.SITE = {
@@ -12,11 +14,15 @@ window.SITE = {
   instagram: "https://www.instagram.com/holynoa/",
   linkedin: "https://www.linkedin.com/in/noayaakobovitz",
   resume: "assets/Resume-Noa-Yaakobovitz.pdf",
+  // the two non-project objects floating on the home page
+  archiveObj: { src: "obj-archive.webp", cm: 24, alt: "a stack of posters" },
+  aboutObj: { src: "obj-about.webp", cm: 11, alt: "an ID badge" },
 };
 
 window.PROJECTS = [
   {
     slug: "anemoia",
+    obj: { src: "obj-anemoia.webp", cm: 22, alt: "a VHS tape" },
     lead: "What remains true when our past is rebuilt by machines?",
     title: "Anemoia",
     kind: "Video art installation",
@@ -35,6 +41,7 @@ window.PROJECTS = [
   },
   {
     slug: "clarity",
+    obj: { src: "obj-clarity.webp", cm: 12.5, alt: "a can" },
     lead: "Alternate minds, one can at a time.",
     title: "Clarity",
     kind: "Conceptual branding",
@@ -56,6 +63,7 @@ window.PROJECTS = [
   },
   {
     slug: "surface-deep",
+    obj: { src: "obj-surface.webp", cm: 12, alt: "a tube" },
     lead: "Less about beauty, more about the rituals we invent to survive ourselves.",
     title: "Surface Deep",
     kind: "Conceptual branding",
@@ -73,6 +81,7 @@ window.PROJECTS = [
   },
   {
     slug: "xhibit",
+    obj: { src: "obj-xhibit.webp", cm: 19, alt: "a ticket and wristband" },
     lead: "Not just what you see, but how you feel, hear, and react.",
     title: "Xhibit",
     kind: "UX / UI design",
@@ -94,6 +103,7 @@ window.PROJECTS = [
   },
   {
     slug: "curious-incident",
+    obj: { src: "obj-curious.webp", cm: 16, alt: "a ceramic dog" },
     lead: "Minimalist motion, quiet tension, and a slightly offbeat visual language.",
     title: "The Curious Incident of the Dog in the Night-Time",
     short: "The Curious Incident",
@@ -112,6 +122,7 @@ window.PROJECTS = [
   },
   {
     slug: "unfolded",
+    obj: { src: "obj-unfolded.webp", cm: 20, alt: "a hand-bound book" },
     lead: "Intimacy and discomfort, bound by hand.",
     title: "Unfolded",
     kind: "Complex content design",
