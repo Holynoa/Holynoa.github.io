@@ -696,7 +696,7 @@
 
     RING.forEach((id, i) => {
       let o, opts;
-      if (id === "archive") { o = S.archiveObj; opts = { href: url("archive/"), label: "Prints & fun", num: "Archive", kind: "Posters and things in between" }; }
+      if (id === "archive") { o = S.archiveObj; opts = { href: url("archive/"), label: "Prints & other stuff", num: "Archive", kind: "Posters and things in between" }; }
       else if (id === "about") { o = S.aboutObj; opts = { href: url("about/"), label: "About", num: "Info", kind: "Noa Yaakobovitz, visual designer" }; }
       else {
         const pi = P.findIndex((p) => p.slug === id), p = P[pi];
@@ -885,7 +885,7 @@
       <div class="page">
         <section class="a-head">
           <div class="a-head__obj"></div>
-          <h1>Prints &amp; fun</h1>
+          <h1>Prints &amp; other stuff</h1>
           <p>Posters, prints and things made in between, from over the years.<span class="mono">${pad(A.length)} pieces · click to look closer</span></p>
         </section>
         <section class="a-grid">
@@ -904,7 +904,7 @@
         <span class="lightbox__cap mono"></span>
       </div>`;
     stage = $(".a-head");
-    $(".a-head__obj").appendChild(makeObj(S.archiveObj, { x: 74, y: 50, rot: -4, depth: 1, k: 0.95, amp: 1.2 }).el);
+    $(".a-head__obj").appendChild(makeObj(S.archiveObj, { x: 72, y: 52, rot: -4, depth: 1, k: 1.9, amp: 1.2 }).el);
     flicker(glyphs($(".a-head h1"), { ratio: 0.3, seed: 4 }), 1500);
     $$(".a-item .frame").forEach(reveal);
 
