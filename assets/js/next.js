@@ -979,32 +979,42 @@
     fit(); addEventListener("resize", fit);
     const col = (v) => getComputedStyle(DE).getPropertyValue(v).trim();
 
-    // the sprite is the real object, shrunk to a handful of pixels, facing right, its fragments trailing behind
-    const src = new Image();
-    src.onload = () => {
-      const tw = 64, th = Math.round(tw * src.naturalHeight / src.naturalWidth);
-      const c = document.createElement("canvas"); c.width = tw; c.height = th;
-      const x = c.getContext("2d", { willReadFrequently: true });
-      x.translate(tw, 0); x.scale(-1, 1);
-      x.drawImage(src, 0, 0, tw, th);
-      const d = x.getImageData(0, 0, tw, th).data;
-      sprite = []; sw = tw; sh = th;
-      for (let j = 0; j < th; j++) for (let i = 0; i < tw; i++) {
-        const k = (j * tw + i) * 4;
-        if (d[k + 3] < 110) continue;
-        const lum = d[k] * 0.3 + d[k + 1] * 0.59 + d[k + 2] * 0.11;
-        sprite.push([i, j, lum < 45 ? 2 : d[k + 2] > d[k] + 30 ? 1 : 0]);   // 0 body, 1 fragment, 2 dark detail
-      }
+    // a little pixel version of the ceramic dog: one body, four leg poses
+    const BODY = [
+      "..................##......",
+      "#................###......",
+      "##..............######....",
+      ".##.............##e######.",
+      "..#.............#########n",
+      "..#..............######...",
+      "..##############c###......",
+      "..#################.......",
+      "..#################.......",
+      "...###############........",
+    ];
+    const LEGS = {
+      a: ["..##.............##.......", ".##...............##......", "##.................##....."],
+      b: ["...##...........##........", "...##...........##........", "....##.........##........."],
+      c: [".....##......##...........", "......##....##............", ".......##..##............."],
+      j: [".##................##.....", "##..................##....", "#....................#...."],
     };
-    src.src = objSrc("obj-curious.webp");
+    const FR = {};
+    Object.keys(LEGS).forEach((k) => {
+      const px = [];
+      [...BODY, ...LEGS[k]].forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== ".") px.push([i, j, ch]); }));
+      FR[k] = px;
+    });
+    const GRID_W = BODY[0].length, GRID_H = BODY.length + 3;
+    const CYCLE = ["a", "b", "c", "b"];
+    const RAINBOW = ["#ff6fcf", "#ffd35a", "#7be495", "#6fb6ff", "#b48cff"];
 
-    const S = { mode: "auto", y: 0, vy: 0, t: 0, speed: 260, obs: [], next: 0.9, score: 0, best: 0, dead: false, deadAt: 0, ground: 0, dust: [], visible: true, last: 0 };
+    const S = { mode: "auto", y: 0, vy: 0, t: 0, speed: 260, obs: [], next: 0.9, score: 0, best: 0, dead: false, deadAt: 0, ground: 0, dust: [], poop: [], poopT: 0, poopN: 0, visible: true, last: 0 };
     S.best = Number(keep.get("hn-dog-best")) || 0;
     for (let i = 0; i < 7; i++) S.dust.push({ x: Math.random() * W, y: 18 + Math.random() * 70, s: 2 + ((Math.random() * 3) | 0) * 2, v: 8 + Math.random() * 14 });
 
-    const DOG = { x: 64, w: 64, h: 40 };
-    const reset = (mode) => { Object.assign(S, { mode, y: 0, vy: 0, speed: 260, obs: [], next: 0.8, score: 0, dead: false }); };
-    const jump = () => { if (S.y === 0) S.vy = -680; };
+    const DOG = { x: 60, w: GRID_W * 4, h: GRID_H * 4 };   // 4 screen px per dog pixel
+    const reset = (mode) => { Object.assign(S, { mode, y: 0, vy: 0, speed: 260, obs: [], next: 0.8, score: 0, dead: false, poop: [] }); };
+    const jump = () => { if (S.y === 0) S.vy = -640; };
     const act = () => {
       if (REDUCED) return;
       if (S.mode !== "play" || S.dead) { reset("play"); hint.textContent = FINE ? "space or click to jump" : "tap to jump"; note.textContent = "Offline mode"; }
@@ -1036,7 +1046,7 @@
         S.speed = Math.min(560, S.speed + dt * 6);
         S.score += dt * S.speed / 30;
         // physics
-        S.vy += 1900 * dt; S.y = Math.min(0, S.y + S.vy * dt); if (S.y === 0) S.vy = 0;
+        S.vy += 2200 * dt; S.y = Math.min(0, S.y + S.vy * dt); if (S.y === 0) S.vy = 0;
         // obstacles
         S.next -= dt; if (S.next <= 0) spawn();
         S.obs.forEach((o) => (o.x -= S.speed * dt));
@@ -1054,6 +1064,19 @@
           }
         }
         S.dust.forEach((d) => { d.x -= d.v * dt; if (d.x < -10) { d.x = W + 10; d.y = 18 + Math.random() * 70; } });
+        // nyan style: it leaves a trail of little rainbow pixels behind it
+        S.poopT -= dt;
+        if (S.poopT <= 0) {
+          S.poopT = 0.055;
+          const sz = Math.random() < 0.3 ? 9 : 6;
+          S.poop.push({ x: DOG.x + 4, y: GROUND + S.y - DOG.h * 0.42, vx: -60 - Math.random() * 60, vy: -40 + Math.random() * 60, s: sz, c: RAINBOW[S.poopN++ % RAINBOW.length], rest: false });
+          if (S.poop.length > 140) S.poop.shift();
+        }
+        S.poop.forEach((p) => {
+          if (!p.rest) { p.vy += 900 * dt; p.x += (p.vx - S.speed * 0.15) * dt; p.y += p.vy * dt; if (p.y >= GROUND - p.s) { p.y = GROUND - p.s; p.rest = true; } }
+          else p.x -= S.speed * dt;
+        });
+        S.poop = S.poop.filter((p) => p.x > -12);
       }
       if (S.dead && now - S.deadAt > 5000) { reset("auto"); note.textContent = "Connection lost"; hint.textContent = FINE ? "press space or click to play" : "tap to play"; }
 
@@ -1077,18 +1100,18 @@
         ctx.fillStyle = i % 2 ? pink : bone;
         for (let yy = GROUND - b.h; yy < GROUND; yy += o.size) ctx.fillRect(x, yy + 1, o.size - 2, Math.min(o.size - 2, GROUND - yy - 1));
       }));
+      // the trail
+      S.poop.forEach((p) => { ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x / 3) * 3, Math.round(p.y), p.s, p.s); });
       // the dog
-      if (sprite) {
-        const run = S.y === 0 && !S.dead && !REDUCED ? (Math.floor(S.t * 12) % 2) : 0;
-        const ox = DOG.x, oy = GROUND + S.y - sh - 1 + run;
-        const scale = DOG.w / sw;
-        sprite.forEach(([i, j, t]) => {
-          // fragments behind the dog flicker as it runs
-          if (t === 1 && !S.dead && ((i + j + Math.floor(S.t * 10)) % 3 === 0)) return;
-          ctx.fillStyle = t === 2 ? col("--void") : t === 1 ? pink : bone;
-          ctx.fillRect(Math.round(ox + i * scale), Math.round(oy + j * scale), Math.ceil(scale), Math.ceil(scale));
+      {
+        const still = S.dead || REDUCED;
+        const key = S.y < 0 ? "j" : still ? "b" : CYCLE[Math.floor(S.t * 14) % 4];
+        const bob = S.y === 0 && !still && (Math.floor(S.t * 14) % 2) ? 4 : 0;
+        const ox = DOG.x, oy = Math.round(GROUND + S.y - DOG.h + 1 - bob);
+        FR[key].forEach(([i, j, ch]) => {
+          ctx.fillStyle = ch === "e" || ch === "n" ? (S.dead && ch === "e" ? pink : col("--void")) : ch === "c" ? pink : bone;
+          ctx.fillRect(ox + i * 4, oy + j * 4, 4, 4);
         });
-        if (S.dead) { ctx.fillStyle = pink; ctx.fillRect(ox + DOG.w - 16, oy + 8, 5, 5); }
       }
       // score, like the original
       ctx.font = '18px "Lingo Pixel", monospace';
