@@ -202,14 +202,14 @@
     const sx = Math.abs(ux) > 1 ? (ex.hw + ow / 2 + m) / Math.abs(ux) : 1e9;
     const sy = Math.abs(uy) > 1 ? (ex.hh + oh / 2 + m) / Math.abs(uy) : 1e9;
     const breathe = 1 + 0.05 * Math.sin(now / 1000 * TAU / o.per[0] + o.ph[0]);
-    const top = small ? 70 : 64, side = 10;
+    const top = small ? 64 : 22, side = 10;
     const place = (s) => {
       o.cx = clamp(ex.cx + ux * s * breathe, ow / 2 + side, W - ow / 2 - side);
       o.cy = clamp(ex.cy + uy * s * breathe, oh / 2 + top, H - oh / 2 - side);
     };
     place(Math.max(1, Math.min(sx, sy)));
     // no room on that side (the screen edge got in the way): go around the other way
-    if (hitsEx(o.cx, o.cy, ow, oh, m) && Math.max(sx, sy) < 1e8) place(Math.max(1, Math.max(sx, sy)));
+    if (hitsEx(o.cx, o.cy, ow, oh, -26) && Math.max(sx, sy) < 1e8) place(Math.max(1, Math.max(sx, sy)));
   }
   const hitsEx = (x, y, w, h, m = 0) => {
     const ex = ORB.ex;
@@ -225,15 +225,16 @@
     for (let i = 0; i < ring.length; i++) for (let j = i + 1; j < ring.length; j++) {
       const a = ring[i], b = ring[j];
       const dx = (b.cx + b.sx) - (a.cx + a.sx), dy = (b.cy + b.sy) - (a.cy + a.sy);
-      const ox = (a.im.offsetWidth + b.im.offsetWidth) / 2 + 14 - Math.abs(dx);
-      const oy = (a.im.offsetHeight + b.im.offsetHeight) / 2 + 14 - Math.abs(dy);
+      const gap = ORB.W < 760 ? 14 : 34;
+      const ox = (a.im.offsetWidth + b.im.offsetWidth) / 2 + gap - Math.abs(dx);
+      const oy = (a.im.offsetHeight + b.im.offsetHeight) / 2 + gap - Math.abs(dy);
       if (ox > 0 && oy > 0) {
         // resolve along the axis that needs the smaller move
         if (ox < oy) { const m = ox / 2 * Math.sign(dx || 1); push.get(a)[0] -= m; push.get(b)[0] += m; }
         else { const m = oy / 2 * Math.sign(dy || 1); push.get(a)[1] -= m; push.get(b)[1] += m; }
       }
     }
-    const { W, H } = ORB, top = W < 760 ? 70 : 64;
+    const { W, H } = ORB, top = W < 760 ? 64 : 22;
     ring.forEach((o) => {
       const [px, py] = push.get(o);
       o.sx += px * 0.12; o.sy += py * 0.12;
@@ -242,7 +243,7 @@
       o.sx = clamp(o.cx + o.sx, ow + 10, W - ow - 10) - o.cx;
       o.sy = clamp(o.cy + o.sy, oh + top, H - oh - 10) - o.cy;
       // never let a push slide anything over the name or the intro
-      const ex = ORB.ex, x = o.cx + o.sx, y = o.cy + o.sy, mm = 12;
+      const ex = ORB.ex, x = o.cx + o.sx, y = o.cy + o.sy, mm = -10;
       if (ex && hitsEx(x, y, ow * 2, oh * 2, mm)) {
         const needX = ex.hw + ow + mm - Math.abs(x - ex.cx), needY = ex.hh + oh + mm - Math.abs(y - ex.cy);
         const canY = y < ex.cy ? y - needY - oh >= top : y + needY + oh <= H - 10;
@@ -361,6 +362,8 @@
       if (fo !== o.focus) { o.focus = fo; o.el.classList.toggle("is-focus", fo); }
     }
     if (CO.obj) placeCallout();
+    const sc = scrollY > 24;
+    if (sc !== loop.sc) { loop.sc = sc; document.body.classList.toggle("is-scrolled", sc); }
     requestAnimationFrame(loop);
   }
 
