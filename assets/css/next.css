@@ -114,9 +114,9 @@ html[data-lights="on"] {
 html[data-lights="on"] .dark { opacity: 0; }
 html[data-lights="on"] .grain { mix-blend-mode: multiply; opacity: 0.09; }
 html[data-lights="on"] .crt { --scan: 0.25; --vig: 0.16; }
-html[data-lights="on"] .obj__img { filter: none; }
-html[data-lights="on"] .obj.is-focus .obj__img { filter: drop-shadow(0 18px 30px rgba(12, 11, 12, 0.22)); }
-html[data-lights="on"] .has-focus .obj:not(.is-focus) .obj__img { filter: saturate(0.5) opacity(0.55); }
+html[data-lights="on"] .obj__img, html[data-lights="on"] .obj__px { filter: none; }
+html[data-lights="on"] .obj.is-focus .obj__img, html[data-lights="on"] .obj.is-focus .obj__px { filter: drop-shadow(0 18px 30px rgba(12, 11, 12, 0.22)); }
+html[data-lights="on"] .has-focus .obj:not(.is-focus) .obj__img, html[data-lights="on"] .has-focus .obj:not(.is-focus) .obj__px { filter: saturate(0.5) opacity(0.55); }
 html[data-lights="on"] .dc-c.is-noise { color: #d42f9c; }
 html.is-switching *, html.is-switching *::before, html.is-switching *::after { transition: none !important; }
 .pix { position: fixed; left: 0; top: 0; z-index: 90; pointer-events: none; max-width: none; image-rendering: pixelated; }
@@ -177,24 +177,17 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
 .obj:not(.is-ready) { opacity: 0; }
 .obj { transition: opacity 0.8s var(--ease-out); }
 .obj__par, .obj__float { will-change: transform; }
+.obj__float { position: relative; }
+.obj__px { position: absolute; pointer-events: none; max-width: none; max-height: none; filter: brightness(0.82) saturate(0.85); transition: filter 0.5s var(--ease-out); }
 .obj__img { width: 100%; height: auto; filter: brightness(0.82) saturate(0.85); transition: filter 0.5s var(--ease-out); }
-.obj.is-focus .obj__img { filter: brightness(1.04) saturate(1.05) drop-shadow(0 0 40px rgba(239, 232, 222, 0.08)); }
-.has-focus .obj:not(.is-focus) .obj__img { filter: brightness(0.42) saturate(0.6); }
+.obj.is-focus .obj__img, .obj.is-focus .obj__px { filter: brightness(1.04) saturate(1.05) drop-shadow(0 0 40px rgba(239, 232, 222, 0.08)); }
+.has-focus .obj:not(.is-focus) .obj__img, .has-focus .obj:not(.is-focus) .obj__px { filter: brightness(0.42) saturate(0.6); }
 @media (hover: none) {
-  .obj__img { filter: none; }
-  .has-focus .obj:not(.is-focus) .obj__img { filter: brightness(0.7) saturate(0.85); }
+  .obj__img, .obj__px { filter: none; }
+  .has-focus .obj:not(.is-focus) .obj__img, .has-focus .obj:not(.is-focus) .obj__px { filter: brightness(0.7) saturate(0.85); }
   .dark { --dk: 0.3 !important; }
 }
 
-/* glitch: a moment where the object doesn't hold */
-.obj.is-glitch .obj__img { animation: glitch 0.34s steps(1) 1; }
-@keyframes glitch {
-  0% { transform: translate(6px, 0); filter: drop-shadow(-4px 0 rgba(255, 0, 90, 0.8)) drop-shadow(4px 0 rgba(0, 255, 240, 0.6)); }
-  25% { transform: translate(-8px, 2px) skewX(-6deg); clip-path: inset(10% 0 40% 0); }
-  50% { transform: translate(3px, -1px); filter: drop-shadow(5px 0 rgba(255, 0, 90, 0.8)); clip-path: inset(50% 0 0 0); }
-  75% { transform: translate(-2px, 0); clip-path: none; }
-  100% { transform: none; }
-}
 
 /* ============================================================
    HOME
