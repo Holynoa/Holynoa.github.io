@@ -11,7 +11,7 @@ The home page: objects from each project float around the name. Hover one to sto
 All text lives in `assets/js/data.js`:
 
 - **Projects**: title, year, description, cover image, gallery
-- **Archive**: the "Prints & fun" images
+- **Archive**: the "Prints & other stuff" images
 - **Contact details**: email, phone, Instagram, LinkedIn
 
 To add an image, drop it into `assets/img/` and add its file name to the right list in `data.js`.
@@ -21,7 +21,7 @@ To add an image, drop it into `assets/img/` and add its file name to the right l
 ```
 index.html            home
 about/                info page
-archive/              prints & fun
+archive/              prints & other stuff
 work/<project>/       one folder per project
 assets/css/next.css   all styles
 assets/js/next.js     animations and page logic
