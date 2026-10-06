@@ -366,18 +366,25 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
 .lightbox__cap { position: absolute; bottom: 24px; left: var(--gutter); color: var(--ash); }
 
 /* about */
-.about { padding: 150px var(--gutter) 14vh; display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
-.about h1 { grid-column: 1 / -1; margin: 0 0 8vh; font-weight: 400; font-size: clamp(56px, 10vw, 180px); line-height: 0.84; }
-.about__portrait { grid-column: 1 / 6; position: relative; overflow: hidden; align-self: start; }
+.about { padding: 120px var(--gutter) 14vh; display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+.about h1 { grid-column: 1 / 7; grid-row: 1; align-self: end; margin: 0 0 6vh; font-weight: 400; font-size: clamp(56px, 10vw, 180px); line-height: 0.84; position: relative; z-index: 2; }
+/* the portrait is black and white with a black ground: shown whole, the black melts into the page */
+.about__portrait { grid-column: 3 / 13; grid-row: 1; position: relative; align-self: start; }
 .about__portrait img {
-  width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 86% 40%;
-  filter: blur(16px) contrast(1.05); transform: scale(1.06);
+  width: 100%; height: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 100%), linear-gradient(to left, transparent 0%, #000 10%);
+  -webkit-mask-composite: source-in;
+          mask-image: linear-gradient(to bottom, #000 76%, transparent 100%), linear-gradient(to left, transparent 0%, #000 10%);
+          mask-composite: intersect;
+  filter: blur(14px); transform: scale(1.02);
   transition: filter 0.9s var(--ease-out), transform 1.2s var(--ease-out);
 }
-.about__portrait:hover img, .about__portrait.is-seen img { filter: blur(0) contrast(1.05); transform: scale(1); }
-.about__portrait .mono { position: absolute; left: 14px; bottom: 12px; color: var(--bone); mix-blend-mode: difference; transition: opacity 0.4s; }
+.about__portrait:hover img, .about__portrait.is-seen img { filter: blur(0); transform: scale(1); }
+.about__portrait .mono { position: absolute; right: 18%; bottom: 14%; color: var(--bone); transition: opacity 0.4s; }
 .about__portrait:hover .mono, .about__portrait.is-seen .mono { opacity: 0; }
-.about__text { grid-column: 7 / 13; }
+html[data-lights="on"] .about__portrait img { filter: brightness(0) blur(14px); }
+html[data-lights="on"] .about__portrait:hover img, html[data-lights="on"] .about__portrait.is-seen img { filter: brightness(0); }
+.about__text { grid-column: 7 / 13; grid-row: 2; margin-top: 4vh; }
 .about__text > p { margin: 0 0 1.1em; font-size: clamp(16px, 1.15vw, 19px); line-height: 1.65; }
 .about__text > p.first, .p-lead, .a-head p { text-wrap: balance; }
 .about__text > p.first { font-size: clamp(24px, 2.1vw, 36px); line-height: 1.2; font-weight: 300; letter-spacing: -0.015em; }
@@ -428,7 +435,8 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
   .a-head { grid-template-columns: 1fr; padding-top: 130px; min-height: auto; }
   .a-grid { grid-template-columns: 1fr 1fr; gap: 24px 12px; }
   .about { display: block; padding-top: 130px; }
-  .about__portrait { margin-bottom: 40px; }
+  .about h1 { margin-bottom: 0; }
+  .about__portrait { margin: -4vh -8vw 30px; }
   .about__list li { grid-template-columns: 110px 1fr; }
 }
 
