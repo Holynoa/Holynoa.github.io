@@ -84,6 +84,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   padding: 22px var(--gutter);
   pointer-events: none;
 }
+.site-header::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--void); border-bottom: 1px solid var(--line);
+  opacity: 0; transition: opacity 0.35s var(--ease-out);
+}
+body.is-scrolled .site-header::before { opacity: 1; }
+body.is-scrolled .site-header { pointer-events: auto; }
 .site-header > * { pointer-events: auto; }
 .brand { font-size: 22px; line-height: 1; display: inline-flex; align-items: center; gap: 10px; }
 .site-header nav { display: flex; gap: clamp(18px, 2.6vw, 40px); }
@@ -141,19 +148,19 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
 /* ============================================================
    HOME
    ============================================================ */
-.hero { --cm: min(0.86vw, 1.6vh); position: relative; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
+.hero { --cm: min(0.78vw, 1.38vh); --tf: min(15vw, 27vh); position: relative; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
 .hero__field { position: absolute; inset: 0; z-index: 2; }
 .dust { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; pointer-events: none; z-index: 1; }
 /* the name and the intro sit above the darkness: always lit */
 .hero__title {
-  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 8;
+  position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); z-index: 8;
   margin: 0; font-weight: 400; text-align: center; white-space: nowrap;
-  font-size: 16vw; line-height: 0.8; letter-spacing: -0.005em; color: var(--bone);
+  font-size: var(--tf); line-height: 0.8; letter-spacing: -0.005em; color: var(--bone);
   pointer-events: none;
 }
 .hero__intro {
-  position: absolute; left: 50%; top: calc(46% + 8.6vw); transform: translateX(-50%); z-index: 8;
-  width: min(30em, 80vw); margin: 0; text-align: center; text-wrap: balance;
+  position: absolute; left: 50%; top: calc(45% + var(--tf) * 0.62 + clamp(18px, 3.2vh, 40px)); transform: translateX(-50%); z-index: 8;
+  width: min(44em, 84vw); margin: 0; text-align: center; text-wrap: balance;
   font-size: clamp(15px, 1.15vw, 19px); line-height: 1.45; font-weight: 400; color: var(--bone);
   text-shadow: 0 0 24px var(--void), 0 0 12px var(--void);
 }
@@ -170,6 +177,7 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
 .callout__dot { position: absolute; left: 0; top: 0; width: 6px; height: 6px; background: var(--pink); opacity: 0; transition: opacity 0.2s; }
 .callout__txt {
   position: absolute; left: 0; top: 0; width: max-content; max-width: 240px;
+  text-shadow: 0 0 14px var(--void), 0 0 6px var(--void), 0 0 2px var(--void);
   opacity: 0; transition: opacity 0.3s var(--ease-out);
 }
 .callout.is-on .callout__line { clip-path: inset(0 0 0 0); }
@@ -341,8 +349,8 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
   .site-header nav { gap: 16px; }
   .site-header nav a[href="#contact"] { display: none; }
   .brand { font-size: 18px; }
-  .hero__title { font-size: 19vw; top: 45%; }
-  .hero__intro { top: calc(45% + 11vw); font-size: 15px; width: 78vw; }
+  .hero { --tf: 19vw; }
+  .hero__intro { font-size: 15px; width: 80vw; }
   .hero__hint { left: var(--gutter); right: auto; }
   .callout__name { font-size: 24px; }
   .callout__txt { max-width: 46vw; }
