@@ -385,6 +385,12 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
 html[data-lights="on"] .about__portrait img { filter: brightness(0) blur(14px); }
 html[data-lights="on"] .about__portrait:hover img, html[data-lights="on"] .about__portrait.is-seen img { filter: brightness(0); }
 .about__text { grid-column: 7 / 13; grid-row: 2; margin-top: 4vh; }
+/* the offline dog, sitting in the empty column next to the text */
+.runner { grid-column: 1 / 6; grid-row: 2; align-self: start; position: sticky; top: 120px; margin-top: 8vh; }
+.runner__note { display: flex; justify-content: space-between; gap: 12px; color: var(--ash); margin: 0 0 14px; }
+.runner__note span:first-child { color: var(--pink); }
+.runner__cv { display: block; width: 100%; aspect-ratio: 600 / 190; image-rendering: pixelated; cursor: pointer; touch-action: manipulation; }
+body.has-cursor .runner__cv { cursor: none; }
 .about__text > p { margin: 0 0 1.1em; font-size: clamp(16px, 1.15vw, 19px); line-height: 1.65; }
 .about__text > p.first, .p-lead, .a-head p { text-wrap: balance; }
 .about__text > p.first { font-size: clamp(24px, 2.1vw, 36px); line-height: 1.2; font-weight: 300; letter-spacing: -0.015em; }
@@ -438,6 +444,8 @@ html[data-lights="on"] .about__portrait:hover img, html[data-lights="on"] .about
   .about h1 { margin-bottom: 0; }
   .about__portrait { margin: -4vh -8vw 30px; }
   .about__list li { grid-template-columns: 110px 1fr; }
+  .runner { position: relative; top: auto; margin-top: 60px; }
+  .lights__label { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
