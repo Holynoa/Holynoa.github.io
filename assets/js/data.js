@@ -8,7 +8,7 @@
 
 window.SITE = {
   name: "Noa Yaakobovitz",
-  email: "noaya10@gmail.com",
+  email: "noa@holynoa.com",
   phone: "+972 50 241 1880",
   phoneHref: "+972502411880",
   instagram: "https://www.instagram.com/holynoa/",
