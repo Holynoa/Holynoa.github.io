@@ -317,6 +317,7 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
 .p-body__text p:first-child::first-letter { font-family: var(--pixel); font-size: 3.4em; float: left; line-height: 0.8; margin: 0.08em 0.1em 0 0; }
 .p-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
 .p-tags span { border: 1px solid var(--line); padding: 6px 10px; color: var(--ash); }
+.p-body__text p.p-note { margin: 28px 0 0; font-size: 13px; color: var(--ash); }
 .p-aside { margin-top: 50px; padding: 24px; border: 1px solid var(--line); }
 .p-aside h3 { margin: 0 0 10px; font-weight: 400; font-size: 26px; }
 .p-aside p { font-size: 15px !important; color: var(--ash); margin: 0 !important; }
