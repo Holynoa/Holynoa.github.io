@@ -182,6 +182,104 @@
     return null;
   }
 
+  /* ---------- under the cursor an object crumbles into pixels ----------
+     the photo is cut into 4px particles in its own colours. the ones the cursor touches come loose and drift
+     a little, and settle back into place after it moves on. nothing else about the object changes. */
+  const PX = { G: 4, margin: 0.3 };
+  function pxSetup(rec) {
+    // exact (fractional) layout size, so the redrawn photo lands on the very same pixels as the <img>
+    const ics = getComputedStyle(rec.im), w = parseFloat(ics.width), h = parseFloat(ics.height);
+    if (!w || !h || !rec.ready) return null;
+    if (rec.px && Math.abs(rec.px.w - w) < 0.01 && Math.abs(rec.px.h - h) < 0.01) return rec.px;
+    const P = rec.px || { cv: document.createElement("canvas"), frags: [], live: false, shed: 0 };
+    if (!P.cv.parentNode) { P.cv.className = "obj__px"; rec.flt.appendChild(P.cv); }
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const mx = Math.round(Math.max(60, w * PX.margin)), my = Math.round(Math.max(60, h * PX.margin));
+    P.cv.width = Math.ceil((w + mx * 2) * dpr); P.cv.height = Math.ceil((h + my * 2) * dpr);
+    Object.assign(P.cv.style, { left: -mx + "px", top: -my + "px", width: P.cv.width / dpr + "px", height: P.cv.height / dpr + "px" });
+    const G = PX.G, pw = Math.ceil(w / G), ph = Math.ceil(h / G);
+    const c = document.createElement("canvas"); c.width = pw; c.height = ph;
+    const x = c.getContext("2d", { willReadFrequently: true });
+    x.imageSmoothingQuality = "high";
+    x.drawImage(rec.im, 0, 0, w / G, h / G);
+    let pd;
+    try { pd = x.getImageData(0, 0, pw, ph).data; } catch { return null; }
+    const parts = [];
+    for (let j = 0; j < ph; j++) for (let i = 0; i < pw; i++) {
+      const k = (j * pw + i) * 4;
+      if (pd[k + 3] > 110) parts.push({ x: i * G, y: j * G, c: `rgb(${pd[k]},${pd[k + 1]},${pd[k + 2]})`, r1: Math.random(), r2: Math.random(), r3: Math.random(), h: 0, ux: 0, uy: 0, amp: 0 });
+    }
+    Object.assign(P, { ctx: P.cv.getContext("2d"), w, h, mx, my, dpr, parts, G });
+    return (rec.px = P);
+  }
+  function pxStart(rec) {
+    const P = pxSetup(rec);
+    if (!P) return;
+    P.rad = Math.max(24, Math.min(44, Math.min(P.w, P.h) * 0.17));
+    P.live = true;
+  }
+  // the cursor, in the object's own (unrotated, unscaled) coordinates
+  function pxLocal(rec, P) {
+    const r = rec.im.getBoundingClientRect(), a = (-rec.rotNow * Math.PI) / 180, sc = 1 + rec.f * 0.07;
+    const dx = M.tx - (r.left + r.width / 2), dy = M.ty - (r.top + r.height / 2);
+    return [(dx * Math.cos(a) - dy * Math.sin(a)) / sc + P.w / 2, (dx * Math.sin(a) + dy * Math.cos(a)) / sc + P.h / 2];
+  }
+  function pxDraw(rec, now) {
+    const P = rec.px, ctx = P.ctx, im = rec.im, G = P.G;
+    const dt = Math.min(0.05, (now - (P.last || now)) / 1000); P.last = now;
+    const on = rec === hovered && FINE && M.in;
+    const [cx, cy] = on ? pxLocal(rec, P) : [-1e5, -1e5];
+    const moved = on && Math.hypot(cx - (P.cx ?? cx), cy - (P.cy ?? cy)) > 0.5; P.cx = cx; P.cy = cy;
+    const R = P.rad, R2 = R * R, sec = now / 1000;
+    // only the pixels under the cursor come loose; they drift off a little and find their way back once it moves on
+    let any = false;
+    for (const q of P.parts) {
+      const dx = q.x + G / 2 - cx, dy = q.y + G / 2 - cy, d2 = dx * dx + dy * dy;
+      const tgt = d2 < R2 && 1 - Math.sqrt(d2) / R > q.r1 * 0.75 ? 1 : 0;
+      if (tgt > q.h) {
+        if (q.h < 0.01) {
+          const a = Math.atan2(dy, dx) + (q.r2 - 0.5) * 1.4;
+          q.ux = Math.cos(a); q.uy = Math.sin(a); q.amp = 8 + q.r2 * 26;
+        }
+        q.h = Math.min(1, q.h + dt * (5 + q.r3 * 4));
+      } else if (q.h > 0) q.h = Math.max(0, q.h - dt * (1.3 + q.r3 * 1.2));
+      if (q.h > 0) any = true;
+    }
+    ctx.setTransform(P.dpr, 0, 0, P.dpr, 0, 0);
+    ctx.clearRect(0, 0, P.w + P.mx * 2 + 2, P.h + P.my * 2 + 2);
+    ctx.translate(P.mx, P.my);
+    ctx.imageSmoothingQuality = "high";
+    if (any) {
+      // the photo is redrawn here so the loose pixels can leave real holes behind them
+      ctx.drawImage(im, 0, 0, P.w, P.h);
+      for (const q of P.parts) if (q.h > 0) ctx.clearRect(q.x, q.y, G, G);
+      for (const q of P.parts) {
+        if (q.h <= 0) continue;
+        const e = 1 - (1 - q.h) * (1 - q.h);
+        const ox = q.ux * q.amp * e + Math.sin(sec * 2.6 + q.r3 * 6) * 2.5 * e;
+        const oy = q.uy * q.amp * e + Math.cos(sec * 2.1 + q.r1 * 6) * 2.5 * e + 7 * e * q.r2;
+        ctx.fillStyle = q.c;
+        const sz = e > 0.6 && q.r3 > 0.6 ? G - 1 : G;
+        ctx.fillRect(Math.round(q.x + ox), Math.round(q.y + oy), sz, sz);
+      }
+      // now and then one gets away for good and fades out
+      if (moved && now > P.shed) {
+        const q = P.parts[(Math.random() * P.parts.length) | 0];
+        if (q.h > 0.5) P.frags.push({ x: q.x, y: q.y, vx: q.ux * (20 + Math.random() * 30), vy: q.uy * (20 + Math.random() * 30) - 10, c: q.c, t0: now, life: 500 + Math.random() * 500 });
+        P.shed = now + 40;
+      }
+    }
+    P.frags = P.frags.filter((f) => now - f.t0 < f.life);
+    for (const f of P.frags) {
+      const t = (now - f.t0) / 1000, k = (now - f.t0) / f.life;
+      ctx.globalAlpha = 1 - k * k; ctx.fillStyle = f.c;
+      ctx.fillRect(Math.round(f.x + f.vx * t), Math.round(f.y + f.vy * t), G - 1, G - 1);
+    }
+    ctx.globalAlpha = 1;
+    im.style.opacity = any ? "0" : "";
+    P.live = any || on || P.frags.length > 0;
+  }
+
   /* ---------- the orbit (home) ---------- */
   // objects travel slowly around the name, always kept clear of it
   const ORB = { el: null, t: 0, speed: TAU / 210, freeze: 0, W: 0, H: 0, ex: null };
@@ -340,6 +438,7 @@
       if (stage) stage.classList.toggle("has-focus", !!hit);
       if (cursorEl) { setCursor(hit && hit.href && !hit.orbit ? "open" : null); cursorEl.classList.toggle("is-on-obj", !!(hit && hit.href)); }
       showCallout(hit);
+      if (hit && !REDUCED && FINE && !kbFocus) pxStart(hit);
     }
 
     // looking at something stops time
@@ -365,6 +464,7 @@
       o.par.style.transform = `translate3d(${ox.toFixed(1)}px,${oy.toFixed(1)}px,0)`;
       const fo = o.f > 0.4;
       if (fo !== o.focus) { o.focus = fo; o.el.classList.toggle("is-focus", fo); }
+      if (o.px && o.px.live) pxDraw(o, now);
     }
     if (CO.obj) placeCallout();
     const sc = scrollY > 24;
@@ -379,20 +479,6 @@
     if (o && o.href) { e.preventDefault(); go(o.href); }
   });
 
-  // sometimes an object doesn't hold together
-  function glitches() {
-    if (REDUCED) return;
-    const tick = () => {
-      const pool = OBJS.filter((o) => o.ready && o !== hovered && onScreen(o.el.getBoundingClientRect()));
-      if (pool.length && !document.hidden) {
-        const o = pool[(Math.random() * pool.length) | 0];
-        o.el.classList.add("is-glitch");
-        setTimeout(() => o.el.classList.remove("is-glitch"), 360);
-      }
-      setTimeout(tick, 5000 + Math.random() * 6000);
-    };
-    setTimeout(tick, 3500);
-  }
   function lampStutter() {
     if (REDUCED || !hasGSAP) return;
     const run = () => {
@@ -1173,7 +1259,6 @@
   cursor();
   transitions();
   smooth();
-  glitches();
   lampStutter();
   requestAnimationFrame(loop);
   document.fonts?.ready.then(() => hasGSAP && window.ScrollTrigger && ScrollTrigger.refresh());
