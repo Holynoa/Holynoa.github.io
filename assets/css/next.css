@@ -447,6 +447,9 @@ body.has-cursor .runner__cv { cursor: none; }
   .about__list li { grid-template-columns: 110px 1fr; }
   .runner { position: relative; top: auto; margin-top: 60px; }
   .lights__label { display: none; }
+  .a-head__obj .obj { --k: 1.15 !important; }
+  .site-header nav { gap: 13px; }
+  .site-header nav a { letter-spacing: 0.06em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
