@@ -946,14 +946,161 @@
             </ul>
             <a class="resume" href="${asset("Resume-Noa-Yaakobovitz.pdf")}" target="_blank" rel="noopener" data-cursor="pdf">Resume <span>↓</span></a>
           </div>
+          <div class="runner" aria-label="A small game: the dog from The Curious Incident runs and jumps. Press space or tap to play.">
+            <p class="runner__note mono"><span>Connection lost</span><span class="runner__hint">${FINE ? "press space or click to play" : "tap to play"}</span></p>
+            <canvas class="runner__cv" data-cursor="jump"></canvas>
+          </div>
         </section>
       </div>`;
     flicker(glyphs($(".about h1"), { ratio: 0.3, seed: 8 }), 1500);
+    runner($(".runner"));
     const pt = $(".about__portrait");
     if (!FINE) pt.addEventListener("click", () => pt.classList.toggle("is-seen"));
     if (hasGSAP && !REDUCED) {
       $$(".about__text > p, .about__list li").forEach((el) => gsap.from(el, { y: 22, opacity: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 94%" } }));
     }
+  }
+
+
+  /* ============================================================
+     RUNNER: the dog from The Curious Incident, offline, running
+     Plays itself like a gif until someone presses space or taps.
+     ============================================================ */
+  function runner(box) {
+    const cv = $(".runner__cv", box), hint = $(".runner__hint", box), note = $(".runner__note span", box);
+    const ctx = cv.getContext("2d");
+    const W = 600, H = 190, GROUND = 160;
+    let dpr = 1, sprite = null, sw = 0, sh = 0;
+    const fit = () => {
+      dpr = Math.min(2, devicePixelRatio || 1);
+      const cw = cv.clientWidth || W;
+      cv.width = Math.round(cw * dpr); cv.height = Math.round(cw * (H / W) * dpr);
+    };
+    fit(); addEventListener("resize", fit);
+    const col = (v) => getComputedStyle(DE).getPropertyValue(v).trim();
+
+    // the sprite is the real object, shrunk to a handful of pixels, facing right, its fragments trailing behind
+    const src = new Image();
+    src.onload = () => {
+      const tw = 64, th = Math.round(tw * src.naturalHeight / src.naturalWidth);
+      const c = document.createElement("canvas"); c.width = tw; c.height = th;
+      const x = c.getContext("2d", { willReadFrequently: true });
+      x.translate(tw, 0); x.scale(-1, 1);
+      x.drawImage(src, 0, 0, tw, th);
+      const d = x.getImageData(0, 0, tw, th).data;
+      sprite = []; sw = tw; sh = th;
+      for (let j = 0; j < th; j++) for (let i = 0; i < tw; i++) {
+        const k = (j * tw + i) * 4;
+        if (d[k + 3] < 110) continue;
+        const lum = d[k] * 0.3 + d[k + 1] * 0.59 + d[k + 2] * 0.11;
+        sprite.push([i, j, lum < 45 ? 2 : d[k + 2] > d[k] + 30 ? 1 : 0]);   // 0 body, 1 fragment, 2 dark detail
+      }
+    };
+    src.src = objSrc("obj-curious.webp");
+
+    const S = { mode: "auto", y: 0, vy: 0, t: 0, speed: 260, obs: [], next: 0.9, score: 0, best: 0, dead: false, deadAt: 0, ground: 0, dust: [], visible: true, last: 0 };
+    S.best = Number(keep.get("hn-dog-best")) || 0;
+    for (let i = 0; i < 7; i++) S.dust.push({ x: Math.random() * W, y: 18 + Math.random() * 70, s: 2 + ((Math.random() * 3) | 0) * 2, v: 8 + Math.random() * 14 });
+
+    const DOG = { x: 64, w: 64, h: 40 };
+    const reset = (mode) => { Object.assign(S, { mode, y: 0, vy: 0, speed: 260, obs: [], next: 0.8, score: 0, dead: false }); };
+    const jump = () => { if (S.y === 0) S.vy = -680; };
+    const act = () => {
+      if (REDUCED) return;
+      if (S.mode !== "play" || S.dead) { reset("play"); hint.textContent = FINE ? "space or click to jump" : "tap to jump"; note.textContent = "Offline mode"; }
+      jump();
+    };
+    cv.addEventListener("pointerdown", (e) => { e.preventDefault(); act(); });
+    addEventListener("keydown", (e) => {
+      if ((e.code !== "Space" && e.code !== "ArrowUp") || !S.visible || e.target.closest("input,textarea,button,a")) return;
+      e.preventDefault(); act();
+    });
+    new IntersectionObserver(([en]) => (S.visible = en.isIntersecting)).observe(cv);
+
+    const spawn = () => {
+      const n = 1 + ((Math.random() * 3) | 0), big = Math.random() < 0.35;
+      const size = big ? 20 : 15;
+      const blocks = [];
+      for (let i = 0; i < n; i++) blocks.push({ dx: i * (size - 2), h: size * (1 + ((Math.random() * (big ? 2 : 1.4)) | 0)) });
+      S.obs.push({ x: W + 10, size, blocks, w: n * (size - 2) + 2 });
+      S.next = 0.75 + Math.random() * 0.9 * (300 / S.speed) + 0.25;
+    };
+    const P = 3;   // one game pixel
+    const frame = (now) => {
+      requestAnimationFrame(frame);
+      const dt = Math.min(0.033, (now - (S.last || now)) / 1000); S.last = now;
+      if (!S.visible || document.hidden) return;
+      const bone = col("--bone"), pink = col("--pink"), ash = col("--ash");
+      if (!S.dead && !REDUCED) {
+        S.t += dt;
+        S.speed = Math.min(560, S.speed + dt * 6);
+        S.score += dt * S.speed / 30;
+        // physics
+        S.vy += 1900 * dt; S.y = Math.min(0, S.y + S.vy * dt); if (S.y === 0) S.vy = 0;
+        // obstacles
+        S.next -= dt; if (S.next <= 0) spawn();
+        S.obs.forEach((o) => (o.x -= S.speed * dt));
+        S.obs = S.obs.filter((o) => o.x + o.w > -20);
+        S.ground = (S.ground + S.speed * dt) % 24;
+        // the gif version jumps by itself, just in time
+        if (S.mode === "auto") { const o = S.obs.find((o) => o.x > DOG.x); if (o && o.x - (DOG.x + DOG.w) < S.speed * 0.16) jump(); }
+        // collision (a little forgiving)
+        const dx0 = DOG.x + 14, dx1 = DOG.x + DOG.w - 12, dy1 = GROUND + S.y, dy0 = dy1 - DOG.h + 6;
+        for (const o of S.obs) for (const b of o.blocks) {
+          const bx0 = o.x + b.dx + 2, bx1 = bx0 + o.size - 4, by0 = GROUND - b.h + 2;
+          if (dx1 > bx0 && dx0 < bx1 && dy1 > by0) {
+            if (S.mode === "play") { S.dead = true; S.deadAt = now; if (S.score > S.best) { S.best = Math.floor(S.score); keep.set("hn-dog-best", String(S.best)); } note.textContent = "Connection lost"; hint.textContent = FINE ? "press space to try again" : "tap to try again"; }
+            else jump();
+          }
+        }
+        S.dust.forEach((d) => { d.x -= d.v * dt; if (d.x < -10) { d.x = W + 10; d.y = 18 + Math.random() * 70; } });
+      }
+      if (S.dead && now - S.deadAt > 5000) { reset("auto"); note.textContent = "Connection lost"; hint.textContent = FINE ? "press space or click to play" : "tap to play"; }
+
+      // draw
+      const k = cv.width / W;
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.imageSmoothingEnabled = false;
+      // drifting fragments instead of clouds
+      ctx.fillStyle = ash; ctx.globalAlpha = 0.35;
+      S.dust.forEach((d) => ctx.fillRect(Math.round(d.x / P) * P, Math.round(d.y / P) * P, d.s, d.s));
+      ctx.globalAlpha = 1;
+      // ground: a line and a scatter of pebbles
+      ctx.fillStyle = bone; ctx.fillRect(0, GROUND, W, 2);
+      ctx.globalAlpha = 0.5;
+      for (let x = -S.ground; x < W; x += 24) { ctx.fillRect(Math.round(x + 5), GROUND + 6, 3, 2); ctx.fillRect(Math.round(x + 15), GROUND + 11, 2, 2); }
+      ctx.globalAlpha = 1;
+      // obstacles: little stacks of pixel cubes
+      S.obs.forEach((o) => o.blocks.forEach((b, i) => {
+        const x = Math.round(o.x + b.dx);
+        ctx.fillStyle = i % 2 ? pink : bone;
+        for (let yy = GROUND - b.h; yy < GROUND; yy += o.size) ctx.fillRect(x, yy + 1, o.size - 2, Math.min(o.size - 2, GROUND - yy - 1));
+      }));
+      // the dog
+      if (sprite) {
+        const run = S.y === 0 && !S.dead && !REDUCED ? (Math.floor(S.t * 12) % 2) : 0;
+        const ox = DOG.x, oy = GROUND + S.y - sh - 1 + run;
+        const scale = DOG.w / sw;
+        sprite.forEach(([i, j, t]) => {
+          // fragments behind the dog flicker as it runs
+          if (t === 1 && !S.dead && ((i + j + Math.floor(S.t * 10)) % 3 === 0)) return;
+          ctx.fillStyle = t === 2 ? col("--void") : t === 1 ? pink : bone;
+          ctx.fillRect(Math.round(ox + i * scale), Math.round(oy + j * scale), Math.ceil(scale), Math.ceil(scale));
+        });
+        if (S.dead) { ctx.fillStyle = pink; ctx.fillRect(ox + DOG.w - 16, oy + 8, 5, 5); }
+      }
+      // score, like the original
+      ctx.font = '18px "Lingo Pixel", monospace';
+      ctx.textAlign = "right"; ctx.textBaseline = "top";
+      ctx.fillStyle = ash; ctx.fillText(`HI ${String(S.best).padStart(5, "0")}`, W - 92, 8);
+      ctx.fillStyle = bone; ctx.fillText(String(Math.floor(S.score)).padStart(5, "0"), W - 6, 8);
+      if (S.dead) {
+        ctx.textAlign = "center"; ctx.font = '22px "Lingo Pixel", monospace';
+        ctx.fillStyle = bone; ctx.fillText("GAME OVER", W / 2, 66);
+      }
+    };
+    requestAnimationFrame(frame);
   }
 
   /* ---------- boot ---------- */
