@@ -131,6 +131,7 @@ window.PROJECTS = [
     tags: ["Editorial", "Bookbinding", "Print"],
     cover: "unfolded-cover.jpg",
     hero: { type: "youtube", id: "CZa-zZuIRwY", poster: "img/unfolded-cover.jpg" },
+    note: "*Please ignore my broken nail lol :(",
     text: [
       "Unfolded is an artist book developed during my second year of studying Visual Communications in the Complex Content Design course. I chose to focus on selected works by photographer Roger Ballen, whose unsettling, psychologically charged imagery served as both inspiration and content.",
       "The book was bound by hand with an exposed spine and designed in A5 format to evoke a personal, almost sentimental quality, contrasting yet complementing the grotesque nature of Ballen's photographs. This deliberate tension between intimacy and discomfort reflects the emotional complexity within his work and guided my editorial and material decisions throughout the project.",

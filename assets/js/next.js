@@ -673,7 +673,7 @@
       <section class="hero" aria-label="Selected work">
         <div class="hero__field"></div>
         <h1 class="hero__title">Holynoa</h1>
-        <p class="hero__intro">Noa Yaakobovitz is a visual designer. She works in branding, motion and interfaces, and is interested in what screens do&nbsp;to&nbsp;memory.</p>
+        <p class="hero__intro">Noa Yaakobovitz is a chronically online graphic designer working across branding, motion and&nbsp;interfaces.</p>
         <span class="hero__hint mono"><i></i>${FINE ? "hover to look, click to open" : "scroll for the index"}</span>
       </section>
       <section class="index" id="index" aria-label="Index">
@@ -841,6 +841,7 @@
           <div class="p-body__text">
             ${p.text.map((t) => `<p>${esc(t)}</p>`).join("")}
             <div class="p-tags">${p.tags.map((t) => `<span class="mono">${esc(t)}</span>`).join("")}</div>
+            ${p.note ? `<p class="p-note">${esc(p.note)}</p>` : ""}
             ${p.aside ? `<aside class="p-aside"><h3 class="px">${esc(p.aside.title)}</h3><p>${esc(p.aside.text)}</p></aside>` : ""}
           </div>
         </section>
@@ -979,24 +980,25 @@
     fit(); addEventListener("resize", fit);
     const col = (v) => getComputedStyle(DE).getPropertyValue(v).trim();
 
-    // a little pixel version of the ceramic dog: one body, four leg poses
+    // a little pixel version of the ceramic dog: one ear, curled tail, navy nose; one body, four leg poses
     const BODY = [
-      "..................##......",
-      "#................###......",
-      "##..............######....",
-      ".##.............##e######.",
-      "..#.............#########n",
-      "..#..............######...",
-      "..##############c###......",
-      "..#################.......",
-      "..#################.......",
-      "...###############........",
+      "......................#.......",
+      ".....................##.......",
+      "...##...............####......",
+      "..#..#.............######.....",
+      "..#...............##e##e##....",
+      "..##..............#########nn.",
+      "...##............#########n...",
+      "....######################....",
+      "....#####################.....",
+      "....####################......",
+      ".....##################.......",
     ];
     const LEGS = {
-      a: ["..##.............##.......", ".##...............##......", "##.................##....."],
-      b: ["...##...........##........", "...##...........##........", "....##.........##........."],
-      c: [".....##......##...........", "......##....##............", ".......##..##............."],
-      j: [".##................##.....", "##..................##....", "#....................#...."],
+      a: ["....##...............##.......", "...##.................##......", "..##...................##.....", ".##.....................##....", "##.......................#...."],
+      b: [".....##..............##.......", ".....##..............##.......", "......##............##........", "......##............##........", ".......#............#........."],
+      c: ["......##...........##.........", ".......##.........##..........", "........##.......##...........", ".........##.....##............", "..........#.....#............."],
+      j: ["...##..................##.....", ".##......................##...", "#..........................#..", "..............................", ".............................."],
     };
     const FR = {};
     Object.keys(LEGS).forEach((k) => {
@@ -1004,17 +1006,17 @@
       [...BODY, ...LEGS[k]].forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== ".") px.push([i, j, ch]); }));
       FR[k] = px;
     });
-    const GRID_W = BODY[0].length, GRID_H = BODY.length + 3;
+    const GRID_W = BODY[0].length, GRID_H = BODY.length + 5;
     const CYCLE = ["a", "b", "c", "b"];
-    const RAINBOW = ["#ff6fcf", "#ffd35a", "#7be495", "#6fb6ff", "#b48cff"];
+    const NAVY = "#2a3a7a";   // the glaze on its nose and eyes
 
     const S = { mode: "auto", y: 0, vy: 0, t: 0, speed: 260, obs: [], next: 0.9, score: 0, best: 0, dead: false, deadAt: 0, ground: 0, dust: [], poop: [], poopT: 0, poopN: 0, visible: true, last: 0 };
     S.best = Number(keep.get("hn-dog-best")) || 0;
     for (let i = 0; i < 7; i++) S.dust.push({ x: Math.random() * W, y: 18 + Math.random() * 70, s: 2 + ((Math.random() * 3) | 0) * 2, v: 8 + Math.random() * 14 });
 
-    const DOG = { x: 60, w: GRID_W * 4, h: GRID_H * 4 };   // 4 screen px per dog pixel
+    const DOG = { x: 50, w: GRID_W * 4, h: GRID_H * 4 };   // 4 screen px per dog pixel
     const reset = (mode) => { Object.assign(S, { mode, y: 0, vy: 0, speed: 260, obs: [], next: 0.8, score: 0, dead: false, poop: [] }); };
-    const jump = () => { if (S.y === 0) S.vy = -640; };
+    const jump = () => { if (S.y === 0) S.vy = -600; };
     const act = () => {
       if (REDUCED) return;
       if (S.mode !== "play" || S.dead) { reset("play"); hint.textContent = FINE ? "space or click to jump" : "tap to jump"; note.textContent = "Offline mode"; }
@@ -1055,7 +1057,7 @@
         // the gif version jumps by itself, just in time
         if (S.mode === "auto") { const o = S.obs.find((o) => o.x > DOG.x); if (o && o.x - (DOG.x + DOG.w) < S.speed * 0.16) jump(); }
         // collision (a little forgiving)
-        const dx0 = DOG.x + 14, dx1 = DOG.x + DOG.w - 12, dy1 = GROUND + S.y, dy0 = dy1 - DOG.h + 6;
+        const dx0 = DOG.x + 20, dx1 = DOG.x + DOG.w - 14, dy1 = GROUND + S.y, dy0 = dy1 - DOG.h + 6;
         for (const o of S.obs) for (const b of o.blocks) {
           const bx0 = o.x + b.dx + 2, bx1 = bx0 + o.size - 4, by0 = GROUND - b.h + 2;
           if (dx1 > bx0 && dx0 < bx1 && dy1 > by0) {
@@ -1064,12 +1066,12 @@
           }
         }
         S.dust.forEach((d) => { d.x -= d.v * dt; if (d.x < -10) { d.x = W + 10; d.y = 18 + Math.random() * 70; } });
-        // nyan style: it leaves a trail of little rainbow pixels behind it
+        // like the figurine, it keeps shedding little white pixels behind it
         S.poopT -= dt;
         if (S.poopT <= 0) {
           S.poopT = 0.055;
-          const sz = Math.random() < 0.3 ? 9 : 6;
-          S.poop.push({ x: DOG.x + 4, y: GROUND + S.y - DOG.h * 0.42, vx: -60 - Math.random() * 60, vy: -40 + Math.random() * 60, s: sz, c: RAINBOW[S.poopN++ % RAINBOW.length], rest: false });
+          const sz = Math.random() < 0.25 ? 6 : Math.random() < 0.5 ? 4 : 3;
+          S.poop.push({ x: DOG.x + 14, y: GROUND + S.y - DOG.h * 0.55, vx: -60 - Math.random() * 60, vy: -40 + Math.random() * 60, s: sz, rest: false });
           if (S.poop.length > 140) S.poop.shift();
         }
         S.poop.forEach((p) => {
@@ -1101,7 +1103,8 @@
         for (let yy = GROUND - b.h; yy < GROUND; yy += o.size) ctx.fillRect(x, yy + 1, o.size - 2, Math.min(o.size - 2, GROUND - yy - 1));
       }));
       // the trail
-      S.poop.forEach((p) => { ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x / 3) * 3, Math.round(p.y), p.s, p.s); });
+      ctx.fillStyle = bone;
+      S.poop.forEach((p) => ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s));
       // the dog
       {
         const still = S.dead || REDUCED;
@@ -1109,7 +1112,7 @@
         const bob = S.y === 0 && !still && (Math.floor(S.t * 14) % 2) ? 4 : 0;
         const ox = DOG.x, oy = Math.round(GROUND + S.y - DOG.h + 1 - bob);
         FR[key].forEach(([i, j, ch]) => {
-          ctx.fillStyle = ch === "e" || ch === "n" ? (S.dead && ch === "e" ? pink : col("--void")) : ch === "c" ? pink : bone;
+          ctx.fillStyle = ch === "e" || ch === "n" ? (S.dead && ch === "e" ? pink : NAVY) : bone;
           ctx.fillRect(ox + i * 4, oy + j * 4, 4, 4);
         });
       }
