@@ -931,7 +931,7 @@
       <div class="page">
         <section class="about">
           <h1>About</h1>
-          <div class="about__portrait" data-cursor="look"><img src="${img("portrait-bitmap.jpg")}" alt="Portrait of Noa"><span class="mono">${FINE ? "hover to see" : "tap to see"}</span></div>
+          <div class="about__portrait" data-cursor="look"><img src="${img("portrait-cut.webp")}" alt="Portrait of Noa"><span class="mono">${FINE ? "hover to see" : "tap to see"}</span></div>
           <div class="about__text">
             <p class="first">Noa Yaakobovitz is a visual designer with a B.Des. in Visual Communication from HIT.</p>
             <p>I work across branding, motion design, post-production, compositing, and UX/UI, with a strong focus on screen-based visuals.</p>
