@@ -31,6 +31,11 @@
     get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { sessionStorage.setItem(k, v); } catch {} },
   };
+  const keep = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+  if (keep.get("hn-lights") === "on") DE.dataset.lights = "on";
 
   /* ---------- glyph mixing (Lingo pixel / italic) ---------- */
   const hash = (i, seed) => { const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453; return x - Math.floor(x); };
@@ -402,21 +407,85 @@
   const rvIO = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { rvIO.unobserve(e.target); e.target.classList.add("is-in"); } }), { rootMargin: "0px 0px -10% 0px" });
   const reveal = (el) => { if (REDUCED) return; el.classList.add("rv"); rvIO.observe(el); };
 
-  /* ---------- page transition: a quiet fade to black ---------- */
-  const veil = h(`<div class="veil" aria-hidden="true"></div>`);
+  /* ---------- pink pixels: they cover the screen between pages and on the way in ---------- */
+  const pix = (() => {
+    const cv = document.createElement("canvas");
+    cv.className = "pix";
+    cv.setAttribute("aria-hidden", "true");
+    let cells = [], cols = 0, rows = 0, size = 0, ctx = null;
+    const setup = () => {
+      cols = innerWidth < 700 ? 8 : 16;
+      size = Math.ceil(innerWidth / cols);
+      rows = Math.ceil(innerHeight / size);
+      cv.width = cols * size; cv.height = rows * size;
+      cv.style.width = cols * size + "px"; cv.style.height = rows * size + "px";
+      ctx = cv.getContext("2d");
+      cells = [...Array(cols * rows).keys()];
+      for (let i = cells.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [cells[i], cells[j]] = [cells[j], cells[i]]; }
+    };
+    const colour = () => getComputedStyle(DE).getPropertyValue("--pink").trim() || "#ff6fcf";
+    const run = (dur, paint) => new Promise((res) => {
+      let k = 0; const t0 = performance.now();
+      const fr = (t) => {
+        const want = Math.min(cells.length, Math.ceil(((t - t0) / dur) * cells.length));
+        for (; k < want; k++) { const i = cells[k]; paint((i % cols) * size, ((i / cols) | 0) * size); }
+        if (k < cells.length) requestAnimationFrame(fr); else res();
+      };
+      requestAnimationFrame(fr);
+    });
+    return {
+      cv,
+      cover(dur = 420) { setup(); ctx.fillStyle = colour(); cv.style.visibility = "visible"; return run(dur, (x, y) => ctx.fillRect(x, y, size, size)); },
+      full() { setup(); ctx.fillStyle = colour(); ctx.fillRect(0, 0, cv.width, cv.height); cv.style.visibility = "visible"; },
+      uncover(dur = 560) { if (!ctx) this.full(); return run(dur, (x, y) => ctx.clearRect(x, y, size, size)).then(() => (cv.style.visibility = "hidden")); },
+    };
+  })();
+
+  // the first visit gets a small loading screen; everything that animates in waits for it
+  let bootDone;
+  const booted = new Promise((r) => (bootDone = r));
+  function boot() {
+    document.body.appendChild(pix.cv);
+    const arriving = store.get("hn-tx") === "1";
+    store.set("hn-tx", "0");
+    const first = store.get("hn-seen") !== "1";
+    store.set("hn-seen", "1");
+    if (REDUCED) { pix.cv.style.visibility = "hidden"; bootDone(); return; }
+    if (PAGE === "home" && first) { loader(); return; }
+    if (arriving) { pix.full(); setTimeout(() => pix.uncover(560).then(bootDone), 60); return; }
+    pix.cv.style.visibility = "hidden";
+    bootDone();
+  }
+  function loader() {
+    const el = h(`<div class="loader" aria-hidden="true"><div class="loader__word">Holynoa</div><span class="loader__count mono">000</span><span class="loader__note mono">play → distort → design → repeat</span></div>`);
+    document.body.appendChild(el);
+    const gs = glyphs($(".loader__word", el), { ratio: 0.5, seed: 2 });
+    const iv = setInterval(() => gs.forEach((g) => Math.random() < 0.4 && flip(g)), 90);
+    const count = $(".loader__count", el), t0 = performance.now();
+    let shown = 0;
+    const tick = (now) => {
+      // real progress: the objects and the fonts, never faster than 1.3s, never longer than 6s
+      const objs = OBJS.length ? OBJS.filter((o) => o.ready).length / OBJS.length : 0;
+      const fonts = document.fonts && document.fonts.status === "loaded" ? 1 : 0;
+      const real = now - t0 > 6000 ? 1 : objs * 0.85 + fonts * 0.15;
+      const timed = Math.min(1, (now - t0) / 1300);
+      shown += (Math.min(real, timed) - shown) * 0.18;
+      if (Math.min(real, timed) >= 1 && shown > 0.985) shown = 1;
+      count.textContent = String(Math.round(shown * 100)).padStart(3, "0");
+      if (shown < 1) { requestAnimationFrame(tick); return; }
+      clearInterval(iv);
+      gs.forEach((g, i) => flip(g, hash(i, 3) < 0.34));
+      setTimeout(() => pix.cover(380).then(() => { el.remove(); return pix.uncover(620); }).then(bootDone), 260);
+    };
+    requestAnimationFrame(tick);
+  }
+
   function go(href) {
     if (REDUCED) { location.href = href; return; }
     store.set("hn-tx", "1");
-    veil.classList.add("is-on");
-    setTimeout(() => (location.href = href), 380);
+    pix.cover(420).then(() => (location.href = href));
   }
   function transitions() {
-    document.body.appendChild(veil);
-    if (store.get("hn-tx") === "1" && !REDUCED) {
-      veil.classList.add("is-on", "is-instant");
-      requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.remove("is-on", "is-instant")));
-    }
-    store.set("hn-tx", "0");
     document.addEventListener("click", (e) => {
       const a = e.target.closest("a");
       if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || a.target === "_blank" || a.hasAttribute("download")) return;
@@ -426,7 +495,67 @@
       e.preventDefault();
       go(u.href);
     });
-    addEventListener("pageshow", (e) => { if (e.persisted) veil.classList.remove("is-on"); });
+    addEventListener("pageshow", (e) => { if (e.persisted) pix.cv.style.visibility = "hidden"; });
+  }
+
+  /* ---------- the light switch: like an old fluorescent tube, it takes a moment ---------- */
+  function lightSwitch(btn) {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const sync = () => {
+      const on = DE.dataset.lights === "on";
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.setAttribute("aria-label", on ? "Turn the lights off" : "Turn the lights on");
+      if (meta) meta.content = on ? "#efe8de" : "#080708";
+    };
+    sync();
+    btn.addEventListener("click", () => {
+      const turnOn = DE.dataset.lights !== "on";
+      const set = (v) => { if (v) DE.dataset.lights = "on"; else delete DE.dataset.lights; };
+      keep.set("hn-lights", turnOn ? "on" : "off");
+      DE.classList.add("is-switching");
+      const seq = REDUCED ? [[0, turnOn]] : turnOn
+        ? [[0, true], [60, false], [140, true], [190, false], [330, true]]
+        : [[0, false], [70, true], [120, false]];
+      seq.forEach(([t, v]) => setTimeout(() => set(v), t));
+      setTimeout(() => { DE.classList.remove("is-switching"); sync(); }, seq[seq.length - 1][0] + 40);
+    });
+  }
+
+  /* ---------- text that arrives as code, then settles into words ---------- */
+  const NOISE = "0123456789<>/_#$%&*+=:;[]{}";
+  function decode(el, { duration = 1700, delay = 0 } = {}) {
+    if (REDUCED) return;
+    const text = el.textContent;
+    el.style.visibility = "hidden";
+    const start = () => {
+      // freeze every word at its final width so the lines never jump while it decodes
+      el.innerHTML = text.split(/( +)/).map((w) => /^ +$/.test(w) ? " " : `<span class="dc-w">${[...w].map((c) => `<span class="dc-c" data-c="${esc(c)}">${esc(c)}</span>`).join("")}</span>`).join("");
+      const words = $$(".dc-w", el);
+      words.forEach((w) => { w.style.width = w.getBoundingClientRect().width + "px"; });
+      const cs = $$(".dc-c", el);
+      const n = cs.length;
+      const at = cs.map((_, i) => (i / n) * duration * 0.7 + Math.random() * duration * 0.3);
+      cs.forEach((c) => { c.classList.add("is-noise"); c.textContent = NOISE[(Math.random() * NOISE.length) | 0]; });
+      el.style.visibility = "";
+      const t0 = performance.now();
+      let lastSwap = 0;
+      const fr = (now) => {
+        const t = now - t0;
+        const swap = now - lastSwap > 55;
+        if (swap) lastSwap = now;
+        let left = 0;
+        cs.forEach((c, i) => {
+          if (c._done) return;
+          if (t >= at[i]) { c._done = true; c.textContent = c.dataset.c; c.classList.remove("is-noise"); return; }
+          left++;
+          if (swap) c.textContent = NOISE[(Math.random() * NOISE.length) | 0];
+        });
+        if (left) requestAnimationFrame(fr);
+        else el.textContent = text.replace(/ (\S+ \S+)$/, (m, g) => " " + g.replace(/ /g, "\u00a0"));   // back to plain text, last words held together
+      };
+      requestAnimationFrame(fr);
+    };
+    setTimeout(() => (document.fonts ? document.fonts.ready.then(start) : start()), delay);
   }
 
   /* ---------- shared chrome ---------- */
@@ -440,9 +569,11 @@
           <a href="${url("archive/")}"${cur("archive")}>Archive</a>
           <a href="${url("about/")}"${cur("about")}>About</a>
           <a href="#contact">Contact</a>
+          <button class="lights" type="button" aria-pressed="false" data-cursor="lights"><span class="lights__label">Lights</span><span class="lights__sw" aria-hidden="true"><i></i></span></button>
         </nav>
       </header>`));
     flicker(glyphs($(".brand span"), { ratio: 0.3, seed: 6 }), 2600);
+    lightSwitch($(".lights"));
 
     const c = document.createElement("canvas"); c.width = c.height = 180;
     const x = c.getContext("2d"), d = x.createImageData(180, 180);
@@ -450,7 +581,7 @@
     x.putImageData(d, 0, 0);
     const grain = h(`<div class="grain" aria-hidden="true"></div>`);
     grain.style.backgroundImage = `url(${c.toDataURL()})`;
-    document.body.append(darkEl, grain);
+    document.body.append(darkEl, grain, h(`<div class="crt" aria-hidden="true"><i></i></div>`));
   }
 
   function footer() {
@@ -610,10 +741,18 @@
       mv();
     }
 
+    // entrance: waits for the loader / pink pixels to clear
+    const intro = $(".hero__intro");
+    if (!REDUCED) intro.style.visibility = "hidden";
+    if (hasGSAP && !REDUCED) { gsap.set(tg, { opacity: 0 }); gsap.set([field, ".hero__hint"], { opacity: 0 }); }
+    booted.then(() => {
+      decode(intro, { delay: 350, duration: 1900 });
+      if (!hasGSAP || REDUCED) return;
+      gsap.to(tg, { opacity: 1, duration: 0.01, stagger: { each: 0.07, from: "random" } });
+      gsap.to(field, { opacity: 1, duration: 1.6, ease: "power2.out", delay: 0.2 });
+      gsap.fromTo(".hero__hint", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 2.2 });
+    });
     if (hasGSAP && !REDUCED) {
-      gsap.from(tg, { opacity: 0, duration: 0.01, stagger: { each: 0.07, from: "random" }, delay: 0.35 });
-      gsap.from(field, { opacity: 0, duration: 1.6, ease: "power2.out", delay: 0.6 });
-      gsap.from(".hero__intro, .hero__hint", { opacity: 0, y: 12, duration: 1, ease: "power3.out", delay: 1.2 });
       $$(".index__row").forEach((r) => gsap.from(r, { opacity: 0, y: 24, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: r, start: "top 94%" } }));
     }
   }
@@ -752,7 +891,7 @@
           ${A.map((a, i) => `
             <button class="a-item" type="button" data-i="${i}" data-cursor="look">
               <figure style="margin:0">
-                <div class="frame"><img src="${img(a.src)}" alt="${esc(a.title)}" loading="lazy"></div>
+                <div class="frame"><img src="${img(a.thumb || a.src)}" alt="${esc(a.title)}" loading="lazy"${a.pos ? ` style="object-position:${a.pos}"` : ""}></div>
                 <figcaption><b>${esc(a.title)}</b><span class="mono">${esc(a.kind)}</span></figcaption>
               </figure>
             </button>`).join("")}
@@ -819,6 +958,7 @@
 
   /* ---------- boot ---------- */
   chrome();
+  boot();
   ({ home, project, archive, about })[PAGE]?.();
   footer();
   cursor();

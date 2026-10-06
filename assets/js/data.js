@@ -141,7 +141,7 @@ window.PROJECTS = [
 
 window.ARCHIVE = [
   { src: "print-1.jpg", title: "Afterlife", kind: "Poster" },
-  { src: "print-2.jpg", title: "Nice Genes Bro", kind: "Apparel print" },
+  { src: "print-2.jpg", thumb: "print-2-sq.jpg", title: "Nice Genes Bro", kind: "Apparel print" },
   { src: "print-3.jpg", title: "Crayola", kind: "Poster" },
   { src: "print-4.jpg", title: "Book spread", kind: "Editorial" },
   { src: "print-5.jpg", title: "My life, my rules", kind: "Poster" },
