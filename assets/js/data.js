@@ -15,7 +15,7 @@ window.SITE = {
   linkedin: "https://www.linkedin.com/in/noayaakobovitz",
   resume: "assets/Resume-Noa-Yaakobovitz.pdf",
   // the two non-project objects floating on the home page
-  archiveObj: { src: "obj-archive.webp", cm: 24, alt: "a stack of posters" },
+  archiveObj: { src: "obj-archive.webp", cm: 21, alt: "a stack of posters" },
   aboutObj: { src: "obj-about.webp", cm: 11, alt: "an ID badge" },
 };
 
