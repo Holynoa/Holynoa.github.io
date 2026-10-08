@@ -259,7 +259,56 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
 .site-footer__grid a:hover, .site-footer__grid button:hover { color: var(--pink); }
 .copy-toast { color: var(--pink) !important; opacity: 0; transition: opacity 0.3s; }
 .copy-toast.is-on { opacity: 1; }
-.site-footer__base { display: flex; justify-content: space-between; gap: 20px; margin-top: 14vh; color: var(--ash); flex-wrap: wrap; }
+.site-footer__base { display: flex; justify-content: space-between; gap: 20px; margin-top: 6vh; color: var(--ash); flex-wrap: wrap; }
+
+/* ---------- toys: little desktop icons in the footer ---------- */
+.site-footer__toys { display: flex; justify-content: flex-end; gap: 28px; margin-top: 10vh; }
+.toy { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--ash); padding: 6px; transition: color 0.2s; }
+.toy__ic { width: 32px; height: 32px; transition: transform 0.25s var(--ease-out); }
+.toy:hover, .toy:focus-visible { color: var(--pink); }
+.toy:hover .toy__ic { transform: translateY(-3px); }
+.toy .mono { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* toggles in the same language as the menu: small mono caps, pink brackets when on */
+.tg { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash); padding: 6px 2px; white-space: nowrap; transition: color 0.2s; }
+.tg::before { content: "["; opacity: 0; margin-right: 4px; color: var(--pink); transition: opacity 0.2s; }
+.tg::after { content: "]"; opacity: 0; margin-left: 4px; color: var(--pink); transition: opacity 0.2s; }
+.tg:hover { color: var(--bone); }
+.tg.is-on { color: var(--bone); }
+.tg.is-on::before, .tg.is-on::after { opacity: 1; }
+
+/* paint.exe: a floating panel, glass and hairlines like the rest of the site */
+.toywin { position: fixed; z-index: 64; color: var(--bone); background: rgba(8, 7, 8, 0.86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid var(--line); box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6); outline: none; }
+.toywin__bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); user-select: none; touch-action: none; }
+.toywin__name { font-family: var(--pixel); font-size: 17px; }
+.toywin__file { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash); }
+.toywin__x { justify-self: end; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash); transition: color 0.2s; }
+.toywin__x:hover { color: var(--pink); }
+.paint__row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 16px; flex-wrap: wrap; }
+.paint__tools, .paint__sizes { display: flex; gap: 14px; }
+.paint__cv { display: block; width: calc(100% - 32px); margin: 0 16px; aspect-ratio: 3 / 2; image-rendering: pixelated; background: #efe8de; touch-action: none; cursor: crosshair; }
+body.has-cursor .paint__cv { cursor: crosshair; }
+.paint__foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px 14px; flex-wrap: wrap; }
+.paint__pal { display: flex; gap: 6px; }
+.paint__sw { width: 18px; height: 18px; background: var(--c); border: 1px solid var(--line); position: relative; }
+.paint__sw.is-on::after { content: ""; position: absolute; left: 3px; right: 3px; bottom: -7px; height: 2px; background: var(--pink); }
+.paint__acts { display: flex; gap: 16px; }
+
+/* destroy.exe: the damage sits on the glass, over everything */
+.destroy__cv, .destroy__fx { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 60; touch-action: none; }
+.destroy__fx { z-index: 61; pointer-events: none; }
+.destroy__cv { cursor: crosshair; }
+body.has-cursor .destroy__cv { cursor: crosshair; }
+.destroy__cv[data-tool="hammer"], .destroy__cv[data-tool="gun"], .destroy__cv[data-tool="fire"], body.has-cursor .destroy__cv[data-tool="hammer"], body.has-cursor .destroy__cv[data-tool="gun"], body.has-cursor .destroy__cv[data-tool="fire"] { cursor: none; }
+body.is-tooling .cursor { opacity: 0; }
+.destroy__tool { position: fixed; left: 0; top: 0; z-index: 63; pointer-events: none; display: none; will-change: transform; }
+.destroy__tool.is-on[data-tool="hammer"], .destroy__tool.is-on[data-tool="gun"] { display: block; }
+.destroy__tool svg { position: absolute; display: none; max-width: none; }
+.destroy__tool[data-tool="hammer"] .destroy__hammer { display: block; left: -20px; top: -105px; transform-origin: 150px 170px; transform: rotate(16deg); scale: 1.2; filter: drop-shadow(6px 10px 8px rgba(0, 0, 0, 0.45)); }
+.destroy__tool[data-tool="gun"] .destroy__aim { display: block; left: -22px; top: -22px; }
+.destroy__bar { position: fixed; z-index: 62; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; padding: 10px 20px; background: rgba(8, 7, 8, 0.82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid var(--line); max-width: calc(100vw - 24px); overflow-x: auto; }
+.destroy__name { font-family: var(--pixel); font-size: 17px; color: var(--pink); white-space: nowrap; padding-right: 4px; }
+.destroy__sep { width: 1px; align-self: stretch; background: var(--line); }
 
 /* ============================================================
    INNER PAGES
@@ -419,6 +468,10 @@ body.has-cursor .runner__cv { cursor: none; }
   .index__row .k, .index__row .mono:last-child { display: none; }
   .index__peek { display: none; }
   .site-footer__grid { grid-template-columns: 1fr 1fr; row-gap: 30px; }
+  .site-footer__toys { justify-content: flex-start; }
+  .paint__tools { gap: 10px; flex-wrap: wrap; }
+  .destroy__name, .destroy__sep { display: none; }
+  .destroy__bar { gap: 12px; padding: 10px 14px; }
   .p-head { min-height: auto; padding-top: 150px; padding-bottom: 8vh; display: flex; flex-direction: column; }
   .p-head__obj { position: relative; inset: auto; height: 62vw; order: 2; margin: 4vh 0; }
   .p-head .crumbs { top: 70px; }
