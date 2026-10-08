@@ -160,9 +160,10 @@
     const size = () => {
       // keep what was broken when the window changes size
       const keepImg = layer.width ? ctx.getImageData(0, 0, layer.width, layer.height) : null;
-      [layer, fx].forEach((c) => { c.width = innerWidth * dpr; c.height = innerHeight * dpr; });
+      layer.width = innerWidth * dpr; layer.height = innerHeight * dpr;
+      fx.width = innerWidth; fx.height = innerHeight;   // soft fire and mist do not need retina pixels
       if (keepImg) ctx.putImageData(keepImg, 0, 0);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(1, 0, 0, 1, 0, 0);
     };
     size(); addEventListener("resize", size);
     D = { layer, fx, bar, tool: "hammer", down: false, parts: [], raf: 0, gunT: 0, stampN: 0, size };
@@ -347,7 +348,13 @@
       gr.addColorStop(0, "rgba(244,242,238,0.9)"); gr.addColorStop(0.5, "rgba(236,234,230,0.4)"); gr.addColorStop(1, "rgba(236,234,230,0)");
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
     })();
-    D.fires = []; D.flames = []; D.mist = []; D.hover = false;
+    const smokeSprite = (() => {
+      const cv = document.createElement("canvas"); cv.width = cv.height = 64;
+      const g = cv.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, "rgba(96,92,90,0.9)"); gr.addColorStop(0.5, "rgba(80,76,74,0.4)"); gr.addColorStop(1, "rgba(80,76,74,0)");
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
+    })();
+    D.fires = []; D.flames = []; D.mist = []; D.mistAcc = 0; D.hover = false;
     function ignite(x, y) {
       // the burn mark stays on the glass even after "Fix it" stops the flames
       ctx.save();
@@ -355,7 +362,7 @@
       g.addColorStop(0, "rgba(24,12,6,0.55)"); g.addColorStop(0.6, "rgba(24,12,6,0.25)"); g.addColorStop(1, "rgba(24,12,6,0)");
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y + 4, r * 1.6, 0, 6.283); ctx.fill(); ctx.restore();
       D.fires.push({ x, y, t: 0, s: rnd(0.85, 1.25), acc: 0 });
-      if (D.fires.length > 30) D.fires.slice(0, D.fires.length - 30).forEach((f) => (f.die = f.die || f.t));
+      if (D.fires.length > 24) D.fires.slice(0, D.fires.length - 24).forEach((f) => (f.die = f.die || f.t));
       D.lastFire = [x, y];
       run();
     }
@@ -385,21 +392,22 @@
           f.t += dt;
           const boost = 1 + Math.max(0, 0.8 - f.t) * 0.9;                // a flare-up when it catches
           const fade = f.die !== undefined ? Math.max(0, 1 - (f.t - f.die) / 0.7) : 1;
-          f.acc += dt * 280 * f.s * boost * fade;
-          const k = f.acc | 0; f.acc -= k; emit(f.x, f.y, f.s * boost, k);
+          f.acc += dt * 200 * f.s * boost * fade;
+          const k = f.acc | 0; f.acc -= k; if (D.flames.length < 1400) emit(f.x, f.y, f.s * boost, k);
         });
         if (D.tool === "fire" && D.hover && !D.down) { if (Math.random() < 0.7) D.flames.push({ x: D.x + rnd(-2, 2), y: D.y, vx: rnd(-6, 6), vy: rnd(-70, -30), r: rnd(2, 5), t: 0, life: rnd(0.2, 0.35), k: 0.2 }); }
         D.flames = D.flames.filter((q) => (q.t += dt) < q.life);
         // the extinguisher: a cone of white mist from the nozzle, and any fire it touches goes out in a puff of smoke
         if (D.tool === "ext" && D.down) {
-          for (let i = 0; i < 9; i++) { const a = D.aim + rnd(-0.32, 0.32), v = rnd(260, 520); D.mist.push({ x: D.x, y: D.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: rnd(6, 12), t: 0, life: rnd(0.45, 0.8), smoke: false }); }
+          D.mistAcc += dt * 110; const nm = D.mist.length < 160 ? D.mistAcc | 0 : 0; D.mistAcc -= D.mistAcc | 0;
+          for (let i = 0; i < nm; i++) { const a = D.aim + rnd(-0.32, 0.32), v = rnd(260, 520); D.mist.push({ x: D.x, y: D.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: rnd(9, 15), t: 0, life: rnd(0.4, 0.7), smoke: false }); }
           D.fires.forEach((f) => {
             if (f.die !== undefined) return;
             // inside the spray cone: close enough and roughly in the direction it points
             const dx = f.x - D.x, dy = f.y - D.y, d = Math.hypot(dx, dy), off = Math.abs(((Math.atan2(dy, dx) - D.aim + 9.42) % 6.283) - 3.14);
             if (d < 90 || (d < 240 && off < 0.6)) {
               f.die = f.t;
-              for (let i = 0; i < 16; i++) D.mist.push({ x: f.x + rnd(-14, 14), y: f.y + rnd(-10, 6), vx: rnd(-25, 25), vy: rnd(-90, -40), r: rnd(10, 20), t: 0, life: rnd(0.9, 1.6), smoke: true });
+              for (let i = 0; i < 7; i++) D.mist.push({ x: f.x + rnd(-14, 14), y: f.y + rnd(-10, 6), vx: rnd(-25, 25), vy: rnd(-90, -40), r: rnd(10, 20), t: 0, life: rnd(0.9, 1.6), smoke: true });
             }
           });
         }
@@ -423,8 +431,7 @@
           q.x += q.vx * dt; q.y += q.vy * dt;
           const rr = q.r * (1 + u * (q.smoke ? 2.2 : 2.8));
           fctx.globalAlpha = (1 - u) * (q.smoke ? 0.22 : 0.3);
-          if (q.smoke) { fctx.filter = "brightness(0.45)"; fctx.drawImage(mistSprite, q.x - rr, q.y - rr, rr * 2, rr * 2); fctx.filter = "none"; }
-          else fctx.drawImage(mistSprite, q.x - rr, q.y - rr, rr * 2, rr * 2);
+          fctx.drawImage(q.smoke ? smokeSprite : mistSprite, q.x - rr, q.y - rr, rr * 2, rr * 2);
         });
 
         // chips, shells, flashes

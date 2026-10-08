@@ -677,7 +677,7 @@
     if (window.HNToys) return open();
     if (toy.loading) return;
     toy.loading = true;
-    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008d"; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
+    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?h=" + Math.floor(Date.now() / 36e5)   /* a fresh copy every hour, so toy fixes never wait on the page cache */; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
   }
   function easterEggs() {
     const busy = () => document.body.classList.contains("is-destroying");
