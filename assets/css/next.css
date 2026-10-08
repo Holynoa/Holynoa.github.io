@@ -194,6 +194,9 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
    ============================================================ */
 .hero { --cm: min(0.78vw, 1.38vh); --tf: min(15vw, 27vh); position: relative; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
 .hero__field { position: absolute; inset: 0; z-index: 2; }
+/* clicking the title over and over must never select the objects behind it */
+.hero__field, .hero__title { -webkit-user-select: none; user-select: none; }
+.hero__field img { -webkit-user-drag: none; }
 .dust { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; pointer-events: none; z-index: 1; }
 /* the name and the intro sit above the darkness: always lit */
 .hero__title {
@@ -295,10 +298,11 @@ body.has-cursor .paint__cv { cursor: crosshair; }
 .destroy__fx { z-index: 61; pointer-events: none; }
 .destroy__cv { cursor: crosshair; }
 body.has-cursor .destroy__cv { cursor: crosshair; }
-.destroy__cv[data-tool="hammer"], .destroy__cv[data-tool="gun"], .destroy__cv[data-tool="fire"], body.has-cursor .destroy__cv[data-tool="hammer"], body.has-cursor .destroy__cv[data-tool="gun"], body.has-cursor .destroy__cv[data-tool="fire"] { cursor: none; }
+.destroy__cv[data-tool="hammer"], .destroy__cv[data-tool="gun"], .destroy__cv[data-tool="fire"], .destroy__cv[data-tool="ext"], body.has-cursor .destroy__cv[data-tool="hammer"], body.has-cursor .destroy__cv[data-tool="gun"], body.has-cursor .destroy__cv[data-tool="fire"], body.has-cursor .destroy__cv[data-tool="ext"] { cursor: none; }
 body.is-tooling .cursor { opacity: 0; }
 .destroy__tool { position: fixed; left: 0; top: 0; z-index: 63; pointer-events: none; display: none; will-change: transform; }
-.destroy__tool.is-on[data-tool="hammer"], .destroy__tool.is-on[data-tool="gun"] { display: block; }
+.destroy__tool.is-on[data-tool="hammer"], .destroy__tool.is-on[data-tool="gun"], .destroy__tool.is-on[data-tool="ext"] { display: block; }
+.destroy__tool[data-tool="ext"] .destroy__ext { display: block; left: -3px; top: -6px; filter: drop-shadow(6px 10px 8px rgba(0, 0, 0, 0.45)); }
 .destroy__tool svg { position: absolute; display: none; max-width: none; }
 .destroy__tool[data-tool="hammer"] .destroy__hammer { display: block; left: -20px; top: -105px; transform-origin: 150px 170px; transform: rotate(16deg); scale: 1.2; filter: drop-shadow(6px 10px 8px rgba(0, 0, 0, 0.45)); }
 .destroy__tool[data-tool="gun"] .destroy__aim { display: block; left: -22px; top: -22px; }
