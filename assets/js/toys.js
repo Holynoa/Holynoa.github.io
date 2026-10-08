@@ -137,7 +137,7 @@
   function destroy(at) {
     if (D) return;
     // the screen holds still while it is being broken: no scrolling the page out from under the damage
-    window.HNLenis?.stop(); DE.style.overflow = "hidden";
+    window.HNLenis?.stop(); DE.style.overflow = "hidden"; getSelection()?.removeAllRanges();
     const dpr = Math.min(2, devicePixelRatio || 1);
     const layer = h(`<canvas class="destroy__cv" aria-hidden="true"></canvas>`);
     const fx = h(`<canvas class="destroy__fx" aria-hidden="true"></canvas>`);
@@ -147,6 +147,7 @@
         <button type="button" class="tg is-on" data-t="hammer">Hammer</button>
         <button type="button" class="tg" data-t="gun">Gun</button>
         <button type="button" class="tg" data-t="fire">Fire</button>
+        <button type="button" class="tg" data-t="ext">Extinguisher</button>
         <button type="button" class="tg" data-t="bomb">Pixel bomb</button>
         <button type="button" class="tg" data-t="stamp">Stamp</button>
         <span class="destroy__sep"></span>
@@ -340,7 +341,13 @@
       gr.addColorStop(0, `rgba(${c},1)`); gr.addColorStop(0.55, `rgba(${c},0.85)`); gr.addColorStop(0.8, `rgba(${c},0.3)`); gr.addColorStop(1, `rgba(${c},0)`);
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
     });
-    D.fires = []; D.flames = []; D.hover = false;
+    const mistSprite = (() => {
+      const cv = document.createElement("canvas"); cv.width = cv.height = 64;
+      const g = cv.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, "rgba(244,242,238,0.9)"); gr.addColorStop(0.5, "rgba(236,234,230,0.4)"); gr.addColorStop(1, "rgba(236,234,230,0)");
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
+    })();
+    D.fires = []; D.flames = []; D.mist = []; D.hover = false;
     function ignite(x, y) {
       // the burn mark stays on the glass even after "Fix it" stops the flames
       ctx.save();
@@ -383,6 +390,20 @@
         });
         if (D.tool === "fire" && D.hover && !D.down) { if (Math.random() < 0.7) D.flames.push({ x: D.x + rnd(-2, 2), y: D.y, vx: rnd(-6, 6), vy: rnd(-70, -30), r: rnd(2, 5), t: 0, life: rnd(0.2, 0.35), k: 0.2 }); }
         D.flames = D.flames.filter((q) => (q.t += dt) < q.life);
+        // the extinguisher: a cone of white mist from the nozzle, and any fire it touches goes out in a puff of smoke
+        if (D.tool === "ext" && D.down) {
+          for (let i = 0; i < 9; i++) { const a = D.aim + rnd(-0.32, 0.32), v = rnd(260, 520); D.mist.push({ x: D.x, y: D.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: rnd(6, 12), t: 0, life: rnd(0.45, 0.8), smoke: false }); }
+          D.fires.forEach((f) => {
+            if (f.die !== undefined) return;
+            // inside the spray cone: close enough and roughly in the direction it points
+            const dx = f.x - D.x, dy = f.y - D.y, d = Math.hypot(dx, dy), off = Math.abs(((Math.atan2(dy, dx) - D.aim + 9.42) % 6.283) - 3.14);
+            if (d < 90 || (d < 240 && off < 0.6)) {
+              f.die = f.t;
+              for (let i = 0; i < 16; i++) D.mist.push({ x: f.x + rnd(-14, 14), y: f.y + rnd(-10, 6), vx: rnd(-25, 25), vy: rnd(-90, -40), r: rnd(10, 20), t: 0, life: rnd(0.9, 1.6), smoke: true });
+            }
+          });
+        }
+        D.mist = D.mist.filter((q) => (q.t += dt) < q.life);
         if (D.fires.length) {
           // a warm glow under each fire
           fctx.globalCompositeOperation = light ? "multiply" : "lighter";
@@ -396,6 +417,15 @@
           fctx.drawImage(sprites[ci], q.x - rr, q.y - rr, rr * 2, rr * 2);
         });
         fctx.globalCompositeOperation = "source-over";
+        D.mist.forEach((q) => {
+          const u = q.t / q.life;
+          q.vx *= 1 - 3.2 * dt; q.vy *= 1 - 3.2 * dt; if (q.smoke) q.vy -= 20 * dt; else q.vy += 40 * dt;
+          q.x += q.vx * dt; q.y += q.vy * dt;
+          const rr = q.r * (1 + u * (q.smoke ? 2.2 : 2.8));
+          fctx.globalAlpha = (1 - u) * (q.smoke ? 0.22 : 0.3);
+          if (q.smoke) { fctx.filter = "brightness(0.45)"; fctx.drawImage(mistSprite, q.x - rr, q.y - rr, rr * 2, rr * 2); fctx.filter = "none"; }
+          else fctx.drawImage(mistSprite, q.x - rr, q.y - rr, rr * 2, rr * 2);
+        });
 
         // chips, shells, flashes
         D.parts = D.parts.filter((p) => (p.t += dt) < p.life);
@@ -414,7 +444,7 @@
           else fctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s);
         });
         fctx.globalAlpha = 1;
-        const busy = D.parts.length || D.flames.length || D.fires.length || (D.tool === "fire" && D.hover);
+        const busy = D.parts.length || D.flames.length || D.fires.length || D.mist.length || (D.tool === "fire" && D.hover) || (D.tool === "ext" && D.down);
         D.raf = busy ? requestAnimationFrame(step) : 0;
         if (!D.raf) fctx.clearRect(0, 0, innerWidth, innerHeight);
       };
@@ -437,6 +467,19 @@
             <path d="M-40,-130 L-36,-129.5 L-36,-100.5 L-40,-100 Z" fill="#5a5a62"/>
           </g>
         </svg>
+        <svg class="destroy__ext" width="84" height="124" viewBox="0 0 84 124">
+          <defs>
+            <linearGradient id="hnRed" x1="0" x2="1"><stop offset="0" stop-color="#7a0f12"/><stop offset=".35" stop-color="#e0262b"/><stop offset=".55" stop-color="#f0525a"/><stop offset="1" stop-color="#8e1216"/></linearGradient>
+          </defs>
+          <path d="M53,34 C50,22 30,14 16,15" fill="none" stroke="#141416" stroke-width="5" stroke-linecap="round"/>
+          <path d="M3,6 L19,11 L15,21 Z" fill="#1d1d21" stroke="#000" stroke-width="1"/>
+          <rect x="45" y="24" width="18" height="16" rx="2" fill="#3a3a40" stroke="#000" stroke-width="1"/>
+          <path d="M47,24 L70,16 L72,20 L52,28 Z" fill="#55555c" stroke="#000" stroke-width="1"/>
+          <rect x="37" y="38" width="34" height="80" rx="12" fill="url(#hnRed)" stroke="rgba(0,0,0,.6)" stroke-width="1"/>
+          <rect x="40" y="62" width="28" height="22" rx="2" fill="#efe8de" opacity=".9"/>
+          <path d="M44,69 H64 M44,74 H60 M44,79 H62" stroke="#141416" stroke-width="1.6"/>
+          <path d="M43,44 Q46,40 52,40" stroke="rgba(255,255,255,.45)" stroke-width="2" fill="none"/>
+        </svg>
         <svg class="destroy__aim" width="44" height="44" viewBox="-22 -22 44 44">
           <circle r="13" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="3"/>
           <circle r="13" fill="none" stroke="#efe8de" stroke-width="1.3"/>
@@ -448,7 +491,7 @@
     D.tool_el = tool;
     const hammerSvg = tool.querySelector(".destroy__hammer");
     const place = () => { tool.style.transform = `translate(${D.x}px,${D.y}px)`; };
-    const showTool = () => { tool.dataset.tool = D.tool; tool.classList.toggle("is-on", D.hover); document.body.classList.toggle("is-tooling", D.hover && /hammer|gun|fire/.test(D.tool)); };
+    const showTool = () => { tool.dataset.tool = D.tool; tool.classList.toggle("is-on", D.hover); document.body.classList.toggle("is-tooling", D.hover && /hammer|gun|fire|ext/.test(D.tool)); };
     function swing() { hammerSvg.animate([{ transform: "rotate(16deg)" }, { transform: "rotate(-3deg)", offset: 0.35 }, { transform: "rotate(16deg)" }], { duration: 230, easing: "cubic-bezier(.3,.7,.3,1)" }); }
 
     const shoot = () => { if (!D || !D.down || D.tool !== "gun") return; hole(D.x + rnd(-14, 14), D.y + rnd(-14, 14)); tool.querySelector(".destroy__aim").animate([{ transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: 110 }); D.gunT = setTimeout(shoot, 110); };
@@ -459,8 +502,10 @@
       if (D.tool === "hammer") { swing(); setTimeout(() => D && crack(x, y), 75); }
       else if (D.tool === "gun") shoot();
       else if (D.tool === "fire") ignite(x, y);
+      else if (D.tool === "ext") run();
       else ({ bomb, stamp })[D.tool](x, y);
     });
+    D.aim = -2.36;   // up and to the left, the way the nozzle points
     layer.addEventListener("pointermove", (e) => {
       D.x = e.clientX; D.y = e.clientY; D.hover = true; place(); showTool();
       if (D.tool === "fire") {

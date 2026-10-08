@@ -677,7 +677,7 @@
     if (window.HNToys) return open();
     if (toy.loading) return;
     toy.loading = true;
-    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008c"; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
+    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008d"; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
   }
   function easterEggs() {
     const busy = () => document.body.classList.contains("is-destroying");
@@ -687,6 +687,8 @@
     const onTitle = (x, y) => title && $$(".word", title).concat(title.querySelector(".word") ? [] : [title]).some((w) => { const r = w.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
     if (title) {
       let n = 0, tm = 0;
+      // repeated clicks would otherwise start selecting whatever sits under the title
+      document.addEventListener("mousedown", (e) => { if (e.detail > 1 && onTitle(e.clientX, e.clientY)) e.preventDefault(); });
       document.addEventListener("click", (e) => {
         if (busy() || e.button !== 0 || !onTitle(e.clientX, e.clientY) || pickAt(e.clientX, e.clientY)) return;
         clearTimeout(tm); tm = setTimeout(() => (n = 0), 1400);
