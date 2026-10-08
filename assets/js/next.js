@@ -715,7 +715,7 @@
       const t = e.target.closest("[data-toy]"); if (!t) return;
       const open = () => window.HNToys && window.HNToys[t.dataset.toy]();
       if (window.HNToys) return open();
-      const sc = document.createElement("script"); sc.src = asset("js/toys.js"); sc.onload = open; document.head.appendChild(sc);
+      const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008"; sc.onload = open; document.head.appendChild(sc);
     });
     const big = $(".site-footer__big", f);
     const gs = glyphs(big, { ratio: 0.3, seed: 9 });
