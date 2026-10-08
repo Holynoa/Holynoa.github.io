@@ -209,7 +209,9 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
   text-shadow: 0 0 24px var(--void), 0 0 12px var(--void);
 }
 .hero__hint { position: absolute; right: var(--gutter); bottom: 22px; z-index: 8; color: var(--ash); display: flex; gap: 10px; align-items: center; }
-.hero__hint i { display: inline-block; width: 7px; height: 7px; background: var(--pink); animation: blink 1.1s steps(1) infinite; }
+.hero__hint i { position: relative; display: inline-block; width: 7px; height: 7px; background: var(--pink); animation: blink 1.1s steps(1) infinite; cursor: pointer; transition: transform 0.2s var(--ease-out); }
+.hero__hint i::after { content: ""; position: absolute; inset: -12px; }   /* a bigger target than the pixel itself */
+.hero__hint i:hover { transform: scale(1.6); animation-play-state: paused; opacity: 1; }
 @keyframes blink { 50% { opacity: 0; } }
 
 /* callout: a line comes out of the object, the name sits on the black */
