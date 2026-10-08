@@ -671,13 +671,13 @@
   }
 
   /* two hidden toys. destroy.exe: hit the big HOLYNOA title five times in a row.
-     paint.exe: double click on the empty void, or just type "paint" (and "destroy") anywhere */
+     paint.exe: click the blinking pink pixel in the corner. Or just type "paint" / "destroy" anywhere */
   function toy(name, arg) {
     const open = () => window.HNToys && window.HNToys[name](arg);
     if (window.HNToys) return open();
     if (toy.loading) return;
     toy.loading = true;
-    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008b"; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
+    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008c"; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
   }
   function easterEggs() {
     const busy = () => document.body.classList.contains("is-destroying");
@@ -696,13 +696,11 @@
         if (n >= 5) { n = 0; toy("destroy", { x: e.clientX, y: e.clientY }); }
       });
     }
-    // a double click on nothing at all
-    document.addEventListener("dblclick", (e) => {
-      if (busy() || e.target.closest("p,h1,h2,h3,li,a,button,img,video,input,textarea,.obj,.toywin,.lightbox,.site-header,.site-footer,.runner")) return;
-      if (pickAt(e.clientX, e.clientY) || onTitle(e.clientX, e.clientY)) return;
-      getSelection()?.removeAllRanges();
-      toy("paint");
-    });
+    // the blinking pink pixel in the corner is a brush waiting to be picked up
+    const pix = $(".hero__hint i");
+    if (pix) {
+      pix.addEventListener("click", (e) => { e.stopPropagation(); if (!busy()) toy("paint"); });
+    }
     // or type the name of the program
     let typed = "";
     addEventListener("keydown", (e) => {
@@ -711,7 +709,7 @@
       if (typed.endsWith("paint")) { typed = ""; toy("paint"); }
       else if (typed.endsWith("destroy") && !busy()) { typed = ""; toy("destroy"); }
     });
-    console.log("%cpsst. the title can take five hits. the void likes a double click.", "color:#ff6fcf;font-family:monospace");
+    console.log("%cpsst. the title can take five hits. and that blinking pixel is not just decoration.", "color:#ff6fcf;font-family:monospace");
   }
 
   // leave the tab and the site notices
