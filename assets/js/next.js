@@ -432,7 +432,7 @@
     ds.setProperty("--ly", M.y.toFixed(1) + "px");
     ds.setProperty("--dk", (0.5 + (1 - L.g) * 0.35).toFixed(3));
 
-    const hit = kbFocus || (FINE ? (M.in ? pickAt(M.tx, M.ty) : null) : autoFocus);
+    const hit = document.body.classList.contains("is-destroying") ? null : kbFocus || (FINE ? (M.in ? pickAt(M.tx, M.ty) : null) : autoFocus);
     if (hit !== hovered) {
       hovered = hit;
       if (stage) stage.classList.toggle("has-focus", !!hit);
@@ -474,7 +474,7 @@
 
   // click anywhere on an object's visible pixels opens it
   document.addEventListener("click", (e) => {
-    if (e.defaultPrevented || e.button !== 0 || e.target.closest("a,button,input,textarea,.lightbox")) return;
+    if (e.defaultPrevented || e.button !== 0 || e.target.closest("a,button,input,textarea,.lightbox,.toywin,.destroy__cv")) return;
     const o = pickAt(e.clientX, e.clientY);
     if (o && o.href) { e.preventDefault(); go(o.href); }
   });
@@ -670,6 +670,29 @@
     document.body.append(darkEl, grain, h(`<div class="crt" aria-hidden="true"><i></i></div>`));
   }
 
+  // little desktop icons, drawn pixel by pixel: # bone, p pink, n navy, y yellow
+  const TOY_ICONS = {
+    paint: ["..............##", ".............###", "............###.", "...........###..", "..........###...", ".........###....", "........###.....", ".......###......", "......aaa.......", ".....aaaa.......", "....pppp........", "...ppppp........", "..pppppp........", "..ppppp.........", ".pppp...........", "pp.............."],
+    destroy: ["...........p....", "..........p.p...", ".........#..p...", "........#.......", "......###.......", "....aaaaaaa.....", "...aaaaaaaaa....", "..a##aaaaaaaa...", "..a#aaaaaaaaa...", "..aaaaaaaaaaa...", "..aaaaaaaaaaa...", "..aaaaaaaaaaa...", "...aaaaaaaaa....", "....aaaaaaa.....", "................", "................"],
+  };
+  function pixelIcon(rows) {
+    const col = { "#": "var(--bone)", p: "var(--pink)", a: "var(--ash)" };
+    let r = "";
+    rows.forEach((row, j) => [...row].forEach((c, i) => { if (col[c]) r += `<rect x="${i}" y="${j}" width="1" height="1" fill="${col[c]}"/>`; }));
+    return `<svg class="toy__ic" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+  }
+
+  // leave the tab and the site notices
+  function tabTitle() {
+    const LOST = "Connection lost :(", BACK = "Reconnected :)";
+    let real = document.title, tm = 0;
+    document.addEventListener("visibilitychange", () => {
+      clearTimeout(tm);
+      if (document.hidden) { if (document.title !== LOST && document.title !== BACK) real = document.title; document.title = LOST; }
+      else { document.title = BACK; tm = setTimeout(() => (document.title = real), 1400); }
+    });
+  }
+
   function footer() {
     const f = h(`
       <footer class="site-footer" id="contact">
@@ -680,9 +703,20 @@
           <div><span class="mono">Instagram</span><a href="${S.instagram}" target="_blank" rel="noopener">@holynoa</a></div>
           <div><span class="mono">LinkedIn</span><a href="${S.linkedin}" target="_blank" rel="noopener">noayaakobovitz</a></div>
         </div>
-        <div class="site-footer__base mono"><span>© ${new Date().getFullYear()} Noa Yaakobovitz</span><span class="timer">you have been here for 00:00:00</span></div>
+        <div class="site-footer__toys" aria-label="Toys">
+          <button type="button" class="toy" data-toy="paint" data-cursor="open">${pixelIcon(TOY_ICONS.paint)}<span class="mono">paint.exe</span></button>
+          <button type="button" class="toy" data-toy="destroy" data-cursor="open">${pixelIcon(TOY_ICONS.destroy)}<span class="mono">destroy.exe</span></button>
+        </div>
+        <div class="site-footer__base mono"><span>© ${new Date().getFullYear()} Holynoa</span><span>Website developed and built by Noa Yaakobovitz</span><span class="timer">you have been here for 00:00:00</span></div>
       </footer>`);
     document.body.appendChild(f);
+    // the toys only load when someone opens one
+    f.addEventListener("click", (e) => {
+      const t = e.target.closest("[data-toy]"); if (!t) return;
+      const open = () => window.HNToys && window.HNToys[t.dataset.toy]();
+      if (window.HNToys) return open();
+      const sc = document.createElement("script"); sc.src = asset("js/toys.js"); sc.onload = open; document.head.appendChild(sc);
+    });
     const big = $(".site-footer__big", f);
     const gs = glyphs(big, { ratio: 0.3, seed: 9 });
     flicker(gs, 1600);
@@ -1256,6 +1290,7 @@
   boot();
   ({ home, project, archive, about })[PAGE]?.();
   footer();
+  tabTitle();
   cursor();
   transitions();
   smooth();
