@@ -134,8 +134,10 @@
 
   /* ---------------- destroy.exe ---------------- */
   let D = null;
-  function destroy() {
+  function destroy(at) {
     if (D) return;
+    // the screen holds still while it is being broken: no scrolling the page out from under the damage
+    window.HNLenis?.stop(); DE.style.overflow = "hidden";
     const dpr = Math.min(2, devicePixelRatio || 1);
     const layer = h(`<canvas class="destroy__cv" aria-hidden="true"></canvas>`);
     const fx = h(`<canvas class="destroy__fx" aria-hidden="true"></canvas>`);
@@ -480,6 +482,8 @@
       else if (b.dataset.act === "exit") stop();
     });
     layer.dataset.tool = D.tool;
+    // opened by a hit on the title: that hit already lands
+    if (at) { D.x = at.x; D.y = at.y; D.hover = true; place(); showTool(); swing(); setTimeout(() => D && crack(at.x, at.y), 75); }
   }
 
   function stop() {
@@ -488,6 +492,7 @@
     removeEventListener("resize", D.size);
     D.layer.remove(); D.fx.remove(); D.bar.remove(); D.tool_el.remove();
     document.body.classList.remove("is-destroying", "is-tooling");
+    DE.style.overflow = ""; window.HNLenis?.start();
     D = null;
   }
 

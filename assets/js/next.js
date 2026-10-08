@@ -670,26 +670,57 @@
     document.body.append(darkEl, grain, h(`<div class="crt" aria-hidden="true"><i></i></div>`));
   }
 
-  // little desktop icons, drawn pixel by pixel: # bone, p pink, n navy, y yellow
-  const TOY_ICONS = {
-    paint: ["..............##", ".............###", "............###.", "...........###..", "..........###...", ".........###....", "........###.....", ".......###......", "......aaa.......", ".....aaaa.......", "....pppp........", "...ppppp........", "..pppppp........", "..ppppp.........", ".pppp...........", "pp.............."],
-    destroy: ["...........p....", "..........p.p...", ".........#..p...", "........#.......", "......###.......", "....aaaaaaa.....", "...aaaaaaaaa....", "..a##aaaaaaaa...", "..a#aaaaaaaaa...", "..aaaaaaaaaaa...", "..aaaaaaaaaaa...", "..aaaaaaaaaaa...", "...aaaaaaaaa....", "....aaaaaaa.....", "................", "................"],
-  };
-  function pixelIcon(rows) {
-    const col = { "#": "var(--bone)", p: "var(--pink)", a: "var(--ash)" };
-    let r = "";
-    rows.forEach((row, j) => [...row].forEach((c, i) => { if (col[c]) r += `<rect x="${i}" y="${j}" width="1" height="1" fill="${col[c]}"/>`; }));
-    return `<svg class="toy__ic" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+  /* two hidden toys. destroy.exe: hit the big HOLYNOA title five times in a row.
+     paint.exe: double click on the empty void, or just type "paint" (and "destroy") anywhere */
+  function toy(name, arg) {
+    const open = () => window.HNToys && window.HNToys[name](arg);
+    if (window.HNToys) return open();
+    if (toy.loading) return;
+    toy.loading = true;
+    const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008b"; sc.onload = () => { toy.loading = false; open(); }; document.head.appendChild(sc);
+  }
+  function easterEggs() {
+    const busy = () => document.body.classList.contains("is-destroying");
+    // the title takes a beating before the glass gives
+    const title = $(".hero__title");
+    // the title lets clicks through to the objects, so it is hit-tested by its letters
+    const onTitle = (x, y) => title && $$(".word", title).concat(title.querySelector(".word") ? [] : [title]).some((w) => { const r = w.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
+    if (title) {
+      let n = 0, tm = 0;
+      document.addEventListener("click", (e) => {
+        if (busy() || e.button !== 0 || !onTitle(e.clientX, e.clientY) || pickAt(e.clientX, e.clientY)) return;
+        clearTimeout(tm); tm = setTimeout(() => (n = 0), 1400);
+        n++;
+        const k = n * 2.2;
+        title.animate([{ translate: "0 0" }, { translate: `${-k}px ${k * 0.6}px` }, { translate: `${k}px ${-k * 0.4}px` }, { translate: "0 0" }], { duration: 120 + n * 30, easing: "steps(4)" });
+        if (n >= 5) { n = 0; toy("destroy", { x: e.clientX, y: e.clientY }); }
+      });
+    }
+    // a double click on nothing at all
+    document.addEventListener("dblclick", (e) => {
+      if (busy() || e.target.closest("p,h1,h2,h3,li,a,button,img,video,input,textarea,.obj,.toywin,.lightbox,.site-header,.site-footer,.runner")) return;
+      if (pickAt(e.clientX, e.clientY) || onTitle(e.clientX, e.clientY)) return;
+      getSelection()?.removeAllRanges();
+      toy("paint");
+    });
+    // or type the name of the program
+    let typed = "";
+    addEventListener("keydown", (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.target.closest?.("input,textarea,[contenteditable]")) return;
+      typed = (typed + e.key.toLowerCase()).slice(-7);
+      if (typed.endsWith("paint")) { typed = ""; toy("paint"); }
+      else if (typed.endsWith("destroy") && !busy()) { typed = ""; toy("destroy"); }
+    });
+    console.log("%cpsst. the title can take five hits. the void likes a double click.", "color:#ff6fcf;font-family:monospace");
   }
 
   // leave the tab and the site notices
   function tabTitle() {
-    const LOST = "Connection lost :(", BACK = "Reconnected :)";
-    let real = document.title, tm = 0;
+    const LOST = "Connection lost :(";
+    let real = document.title;
     document.addEventListener("visibilitychange", () => {
-      clearTimeout(tm);
-      if (document.hidden) { if (document.title !== LOST && document.title !== BACK) real = document.title; document.title = LOST; }
-      else { document.title = BACK; tm = setTimeout(() => (document.title = real), 1400); }
+      if (document.hidden) { if (document.title !== LOST) real = document.title; document.title = LOST; }
+      else document.title = real;
     });
   }
 
@@ -703,20 +734,9 @@
           <div><span class="mono">Instagram</span><a href="${S.instagram}" target="_blank" rel="noopener">@holynoa</a></div>
           <div><span class="mono">LinkedIn</span><a href="${S.linkedin}" target="_blank" rel="noopener">noayaakobovitz</a></div>
         </div>
-        <div class="site-footer__toys" aria-label="Toys">
-          <button type="button" class="toy" data-toy="paint" data-cursor="open">${pixelIcon(TOY_ICONS.paint)}<span class="mono">paint.exe</span></button>
-          <button type="button" class="toy" data-toy="destroy" data-cursor="open">${pixelIcon(TOY_ICONS.destroy)}<span class="mono">destroy.exe</span></button>
-        </div>
         <div class="site-footer__base mono"><span>© ${new Date().getFullYear()} Holynoa</span><span>Website developed and built by Noa Yaakobovitz</span><span class="timer">you have been here for 00:00:00</span></div>
       </footer>`);
     document.body.appendChild(f);
-    // the toys only load when someone opens one
-    f.addEventListener("click", (e) => {
-      const t = e.target.closest("[data-toy]"); if (!t) return;
-      const open = () => window.HNToys && window.HNToys[t.dataset.toy]();
-      if (window.HNToys) return open();
-      const sc = document.createElement("script"); sc.src = asset("js/toys.js") + "?v=20261008"; sc.onload = open; document.head.appendChild(sc);
-    });
     const big = $(".site-footer__big", f);
     const gs = glyphs(big, { ratio: 0.3, seed: 9 });
     flicker(gs, 1600);
@@ -764,6 +784,7 @@
   function smooth() {
     if (REDUCED || typeof window.Lenis === "undefined" || !hasGSAP) return null;
     const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+    window.HNLenis = lenis;
     if (window.ScrollTrigger) lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add((t) => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
@@ -1291,6 +1312,7 @@
   ({ home, project, archive, about })[PAGE]?.();
   footer();
   tabTitle();
+  easterEggs();
   cursor();
   transitions();
   smooth();
