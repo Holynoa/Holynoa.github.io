@@ -403,10 +403,18 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
   opacity: 0; pointer-events: none; transition: opacity 0.35s;
 }
 .lightbox.is-open { opacity: 1; pointer-events: auto; }
-.lightbox img { max-height: calc(100vh - 140px); width: auto; }
+.lightbox img { max-height: calc(100vh - 140px); max-width: calc(100vw - 2 * var(--gutter) - 200px); width: auto; }
 .lightbox__close { position: absolute; top: 24px; right: var(--gutter); }
 .lightbox__close:hover { color: var(--pink); }
 .lightbox__cap { position: absolute; bottom: 24px; left: var(--gutter); color: var(--ash); }
+.lightbox__count { position: absolute; bottom: 24px; right: var(--gutter); color: var(--ash); }
+.lightbox__nav { position: absolute; top: 50%; transform: translateY(-50%); padding: 14px 6px; color: var(--bone); transition: color 0.2s, transform 0.25s var(--ease-out); z-index: 1; }
+.lightbox__nav--prev { left: var(--gutter); }
+.lightbox__nav--next { right: var(--gutter); }
+.lightbox__nav:hover, .lightbox__nav:focus-visible { color: var(--pink); }
+.lightbox__nav:focus, .lightbox__nav:focus-visible { outline: none; }   /* the pink text is the focus mark */
+.lightbox__nav--prev:hover { transform: translate(-4px, -50%); }
+.lightbox__nav--next:hover { transform: translate(4px, -50%); }
 
 /* about */
 .about { padding: 120px var(--gutter) 14vh; display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
@@ -453,6 +461,9 @@ body.has-cursor .runner__cv { cursor: none; }
    SMALL SCREENS
    ============================================================ */
 @media (max-width: 760px) {
+  .lightbox img { max-width: 100%; max-height: calc(100vh - 190px); }
+  .lightbox__nav { top: auto; bottom: 58px; transform: none; }
+  .lightbox__nav--prev:hover, .lightbox__nav--next:hover { transform: none; }
   .hero { --cm: 1.75vw; }
   .p-head, .p-next, .a-head { --cm: 2.6vw; }
   .site-header { padding: 16px var(--gutter); }
