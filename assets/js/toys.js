@@ -147,7 +147,7 @@
         <button type="button" class="tg is-on" data-t="hammer">Hammer</button>
         <button type="button" class="tg" data-t="gun">Gun</button>
         <button type="button" class="tg" data-t="fire">Fire</button>
-        <button type="button" class="tg" data-t="ext">Extinguisher</button>
+        <button type="button" class="tg" data-t="termites">Termites</button>
         <button type="button" class="tg" data-t="bomb">Pixel bomb</button>
         <button type="button" class="tg" data-t="stamp">Stamp</button>
         <span class="destroy__sep"></span>
@@ -161,7 +161,7 @@
       // keep what was broken when the window changes size
       const keepImg = layer.width ? ctx.getImageData(0, 0, layer.width, layer.height) : null;
       layer.width = innerWidth * dpr; layer.height = innerHeight * dpr;
-      fx.width = innerWidth; fx.height = innerHeight;   // soft fire and mist do not need retina pixels
+      fx.width = innerWidth; fx.height = innerHeight;   // soft fire and tiny bugs do not need retina pixels
       if (keepImg) ctx.putImageData(keepImg, 0, 0);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(1, 0, 0, 1, 0, 0);
     };
@@ -342,19 +342,7 @@
       gr.addColorStop(0, `rgba(${c},1)`); gr.addColorStop(0.55, `rgba(${c},0.85)`); gr.addColorStop(0.8, `rgba(${c},0.3)`); gr.addColorStop(1, `rgba(${c},0)`);
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
     });
-    const mistSprite = (() => {
-      const cv = document.createElement("canvas"); cv.width = cv.height = 64;
-      const g = cv.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-      gr.addColorStop(0, "rgba(244,242,238,0.9)"); gr.addColorStop(0.5, "rgba(236,234,230,0.4)"); gr.addColorStop(1, "rgba(236,234,230,0)");
-      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
-    })();
-    const smokeSprite = (() => {
-      const cv = document.createElement("canvas"); cv.width = cv.height = 64;
-      const g = cv.getContext("2d"), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-      gr.addColorStop(0, "rgba(96,92,90,0.9)"); gr.addColorStop(0.5, "rgba(80,76,74,0.4)"); gr.addColorStop(1, "rgba(80,76,74,0)");
-      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return cv;
-    })();
-    D.fires = []; D.flames = []; D.mist = []; D.mistAcc = 0; D.hover = false;
+    D.fires = []; D.flames = []; D.termites = []; D.hover = false;
     function ignite(x, y) {
       // the burn mark stays on the glass even after "Fix it" stops the flames
       ctx.save();
@@ -375,6 +363,39 @@
 
     // little hard-edged bits: glass chips, shells, the muzzle flash
     function flash(x, y) { D.parts.push({ kind: "flash", x, y, t: 0, life: 0.07, a: rnd(0, 6.283) }); run(); }
+
+    /* ---------- termites ---------- */
+    function nest(x, y) {
+      const n = 9 + ((Math.random() * 4) | 0);
+      for (let i = 0; i < n && D.termites.length < 80; i++) {
+        const a = rnd(0, 6.283);
+        D.termites.push({ x: x + Math.cos(a) * rnd(2, 10), y: y + Math.sin(a) * rnd(2, 10), a, turn: 0, v: rnd(26, 46), ph: rnd(0, 6), pause: 0, bite: rnd(2.6, 3.8), t: 0, life: rnd(24, 36), k: rnd(0.9, 1.15) });
+      }
+      shake(1);
+      run();
+    }
+    // a pale little body, a brown head with mandibles, six legs that step while it walks
+    function drawTermite(m) {
+      const fade = Math.min(1, (m.life - m.t) / 1.2), k = m.k * 1.5;
+      fctx.save();
+      fctx.globalAlpha = fade;
+      fctx.translate(m.x, m.y); fctx.rotate(m.a); fctx.scale(k, k);
+      const step = Math.sin(m.ph * 6) * (m.pause > 0 ? 0 : 1);
+      fctx.strokeStyle = "rgba(90,60,30,0.95)"; fctx.lineWidth = 0.55;
+      [-1.6, 0.2, 1.8].forEach((lx, i) => {
+        const sw = (i % 2 ? step : -step) * 0.9;
+        fctx.beginPath(); fctx.moveTo(lx, 0); fctx.lineTo(lx + sw - 0.6, -3.2); fctx.moveTo(lx, 0); fctx.lineTo(lx - sw - 0.6, 3.2); fctx.stroke();
+      });
+      fctx.fillStyle = "#ead9bb";
+      fctx.beginPath(); fctx.ellipse(-2.6, 0, 3.4, 1.9, 0, 0, 6.283); fctx.fill();            // abdomen
+      fctx.fillStyle = "#d8c29c";
+      fctx.beginPath(); fctx.ellipse(0.8, 0, 1.5, 1.2, 0, 0, 6.283); fctx.fill();             // thorax
+      fctx.fillStyle = "#8a4a1c";
+      fctx.beginPath(); fctx.ellipse(3.2, 0, 1.6, 1.4, 0, 0, 6.283); fctx.fill();             // head
+      fctx.strokeStyle = "#3a1e0a"; fctx.lineWidth = 0.5;
+      fctx.beginPath(); fctx.moveTo(4.4, -0.6); fctx.lineTo(5.6, -0.2); fctx.moveTo(4.4, 0.6); fctx.lineTo(5.6, 0.2); fctx.stroke();   // mandibles
+      fctx.restore();
+    }
 
     let last = 0;
     function run() {
@@ -397,21 +418,6 @@
         });
         if (D.tool === "fire" && D.hover && !D.down) { if (Math.random() < 0.7) D.flames.push({ x: D.x + rnd(-2, 2), y: D.y, vx: rnd(-6, 6), vy: rnd(-70, -30), r: rnd(2, 5), t: 0, life: rnd(0.2, 0.35), k: 0.2 }); }
         D.flames = D.flames.filter((q) => (q.t += dt) < q.life);
-        // the extinguisher: a cone of white mist from the nozzle, and any fire it touches goes out in a puff of smoke
-        if (D.tool === "ext" && D.down) {
-          D.mistAcc += dt * 110; const nm = D.mist.length < 160 ? D.mistAcc | 0 : 0; D.mistAcc -= D.mistAcc | 0;
-          for (let i = 0; i < nm; i++) { const a = D.aim + rnd(-0.32, 0.32), v = rnd(260, 520); D.mist.push({ x: D.x, y: D.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: rnd(9, 15), t: 0, life: rnd(0.4, 0.7), smoke: false }); }
-          D.fires.forEach((f) => {
-            if (f.die !== undefined) return;
-            // inside the spray cone: close enough and roughly in the direction it points
-            const dx = f.x - D.x, dy = f.y - D.y, d = Math.hypot(dx, dy), off = Math.abs(((Math.atan2(dy, dx) - D.aim + 9.42) % 6.283) - 3.14);
-            if (d < 90 || (d < 240 && off < 0.6)) {
-              f.die = f.t;
-              for (let i = 0; i < 7; i++) D.mist.push({ x: f.x + rnd(-14, 14), y: f.y + rnd(-10, 6), vx: rnd(-25, 25), vy: rnd(-90, -40), r: rnd(10, 20), t: 0, life: rnd(0.9, 1.6), smoke: true });
-            }
-          });
-        }
-        D.mist = D.mist.filter((q) => (q.t += dt) < q.life);
         if (D.fires.length) {
           // a warm glow under each fire
           fctx.globalCompositeOperation = light ? "multiply" : "lighter";
@@ -425,14 +431,36 @@
           fctx.drawImage(sprites[ci], q.x - rr, q.y - rr, rr * 2, rr * 2);
         });
         fctx.globalCompositeOperation = "source-over";
-        D.mist.forEach((q) => {
-          const u = q.t / q.life;
-          q.vx *= 1 - 3.2 * dt; q.vy *= 1 - 3.2 * dt; if (q.smoke) q.vy -= 20 * dt; else q.vy += 40 * dt;
-          q.x += q.vx * dt; q.y += q.vy * dt;
-          const rr = q.r * (1 + u * (q.smoke ? 2.2 : 2.8));
-          fctx.globalAlpha = (1 - u) * (q.smoke ? 0.22 : 0.3);
-          fctx.drawImage(q.smoke ? smokeSprite : mistSprite, q.x - rr, q.y - rr, rr * 2, rr * 2);
-        });
+        // termites: they wander, stop now and then, and eat a ragged tunnel through whatever is under them
+        if (D.termites.length) {
+          ctx.save();
+          D.termites = D.termites.filter((m) => (m.t += dt) < m.life);
+          D.termites.forEach((m) => {
+            if (m.pause > 0) { m.pause -= dt; }
+            else {
+              m.turn += rnd(-6, 6) * dt; m.turn *= 1 - 2.5 * dt;
+              m.a += m.turn * dt * 3;
+              // keep away from the edges of the screen
+              const W = innerWidth, H = innerHeight, mg = 40;
+              if (m.x < mg || m.x > W - mg || m.y < mg || m.y > H - mg) { const ta = Math.atan2(H / 2 - m.y, W / 2 - m.x); m.a += Math.sin(ta - m.a) * 4 * dt; }
+              const sp = m.v * (m.t < 0.4 ? 2.4 : 1);
+              m.x += Math.cos(m.a) * sp * dt; m.y += Math.sin(m.a) * sp * dt; m.ph += sp * dt * 0.9;
+              if (Math.random() < 0.25 * dt) m.pause = rnd(0.3, 1.1);
+              // the bite: a slightly ragged hole right under the head
+              const hx = m.x + Math.cos(m.a) * 5, hy = m.y + Math.sin(m.a) * 5;
+              ctx.fillStyle = "#060506";
+              ctx.beginPath(); ctx.arc(hx + rnd(-0.8, 0.8), hy + rnd(-0.8, 0.8), m.bite * rnd(0.85, 1.15), 0, 6.283); ctx.fill();
+              // crumbs left beside the tunnel, so the trail shows even on the black
+              if (Math.random() < 0.35) {
+                const side = Math.random() < 0.5 ? 1 : -1, o = m.bite + rnd(0.5, 2.5);
+                ctx.fillStyle = `rgba(${lightsOn() ? "70,52,32" : "214,196,168"},${rnd(0.25, 0.6)})`;
+                ctx.fillRect(hx + Math.cos(m.a + 1.57) * o * side, hy + Math.sin(m.a + 1.57) * o * side, rnd(0.6, 1.4), rnd(0.6, 1.4));
+              }
+            }
+            drawTermite(m);
+          });
+          ctx.restore();
+        }
 
         // chips, shells, flashes
         D.parts = D.parts.filter((p) => (p.t += dt) < p.life);
@@ -451,7 +479,7 @@
           else fctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s);
         });
         fctx.globalAlpha = 1;
-        const busy = D.parts.length || D.flames.length || D.fires.length || D.mist.length || (D.tool === "fire" && D.hover) || (D.tool === "ext" && D.down);
+        const busy = D.parts.length || D.flames.length || D.fires.length || D.termites.length || (D.tool === "fire" && D.hover);
         D.raf = busy ? requestAnimationFrame(step) : 0;
         if (!D.raf) fctx.clearRect(0, 0, innerWidth, innerHeight);
       };
@@ -474,19 +502,6 @@
             <path d="M-40,-130 L-36,-129.5 L-36,-100.5 L-40,-100 Z" fill="#5a5a62"/>
           </g>
         </svg>
-        <svg class="destroy__ext" width="84" height="124" viewBox="0 0 84 124">
-          <defs>
-            <linearGradient id="hnRed" x1="0" x2="1"><stop offset="0" stop-color="#7a0f12"/><stop offset=".35" stop-color="#e0262b"/><stop offset=".55" stop-color="#f0525a"/><stop offset="1" stop-color="#8e1216"/></linearGradient>
-          </defs>
-          <path d="M53,34 C50,22 30,14 16,15" fill="none" stroke="#141416" stroke-width="5" stroke-linecap="round"/>
-          <path d="M3,6 L19,11 L15,21 Z" fill="#1d1d21" stroke="#000" stroke-width="1"/>
-          <rect x="45" y="24" width="18" height="16" rx="2" fill="#3a3a40" stroke="#000" stroke-width="1"/>
-          <path d="M47,24 L70,16 L72,20 L52,28 Z" fill="#55555c" stroke="#000" stroke-width="1"/>
-          <rect x="37" y="38" width="34" height="80" rx="12" fill="url(#hnRed)" stroke="rgba(0,0,0,.6)" stroke-width="1"/>
-          <rect x="40" y="62" width="28" height="22" rx="2" fill="#efe8de" opacity=".9"/>
-          <path d="M44,69 H64 M44,74 H60 M44,79 H62" stroke="#141416" stroke-width="1.6"/>
-          <path d="M43,44 Q46,40 52,40" stroke="rgba(255,255,255,.45)" stroke-width="2" fill="none"/>
-        </svg>
         <svg class="destroy__aim" width="44" height="44" viewBox="-22 -22 44 44">
           <circle r="13" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="3"/>
           <circle r="13" fill="none" stroke="#efe8de" stroke-width="1.3"/>
@@ -498,7 +513,7 @@
     D.tool_el = tool;
     const hammerSvg = tool.querySelector(".destroy__hammer");
     const place = () => { tool.style.transform = `translate(${D.x}px,${D.y}px)`; };
-    const showTool = () => { tool.dataset.tool = D.tool; tool.classList.toggle("is-on", D.hover); document.body.classList.toggle("is-tooling", D.hover && /hammer|gun|fire|ext/.test(D.tool)); };
+    const showTool = () => { tool.dataset.tool = D.tool; tool.classList.toggle("is-on", D.hover); document.body.classList.toggle("is-tooling", D.hover && /hammer|gun|fire/.test(D.tool)); };
     function swing() { hammerSvg.animate([{ transform: "rotate(16deg)" }, { transform: "rotate(-3deg)", offset: 0.35 }, { transform: "rotate(16deg)" }], { duration: 230, easing: "cubic-bezier(.3,.7,.3,1)" }); }
 
     const shoot = () => { if (!D || !D.down || D.tool !== "gun") return; hole(D.x + rnd(-14, 14), D.y + rnd(-14, 14)); tool.querySelector(".destroy__aim").animate([{ transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: 110 }); D.gunT = setTimeout(shoot, 110); };
@@ -509,10 +524,9 @@
       if (D.tool === "hammer") { swing(); setTimeout(() => D && crack(x, y), 75); }
       else if (D.tool === "gun") shoot();
       else if (D.tool === "fire") ignite(x, y);
-      else if (D.tool === "ext") run();
+      else if (D.tool === "termites") nest(x, y);
       else ({ bomb, stamp })[D.tool](x, y);
     });
-    D.aim = -2.36;   // up and to the left, the way the nozzle points
     layer.addEventListener("pointermove", (e) => {
       D.x = e.clientX; D.y = e.clientY; D.hover = true; place(); showTool();
       if (D.tool === "fire") {
@@ -529,6 +543,7 @@
       if (b.dataset.t) { D.tool = b.dataset.t; bar.querySelectorAll("[data-t]").forEach((x) => x.classList.toggle("is-on", x === b)); layer.dataset.tool = D.tool; showTool(); }
       else if (b.dataset.act === "fix") {
         D.fires.forEach((f) => (f.die = f.die === undefined ? f.t : f.die));
+        D.termites.forEach((m) => (m.life = Math.min(m.life, m.t + 1.2)));
         layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, easing: "steps(6)" }).onfinish = () => ctx.clearRect(0, 0, innerWidth, innerHeight);
       }
       else if (b.dataset.act === "exit") stop();
