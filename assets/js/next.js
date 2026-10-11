@@ -673,6 +673,8 @@
   /* two hidden toys. destroy.exe: hit the big HOLYNOA title five times in a row.
      paint.exe: click the blinking pink pixel in the corner. Or just type "paint" / "destroy" anywhere */
   function toy(name, arg) {
+    // destroy.exe is a mouse toy: on touch screens it stays hidden
+    if (name === "destroy" && !FINE) return;
     const open = () => window.HNToys && window.HNToys[name](arg);
     if (window.HNToys) return open();
     if (toy.loading) return;
@@ -685,7 +687,7 @@
     const title = $(".hero__title");
     // the title lets clicks through to the objects, so it is hit-tested by its letters
     const onTitle = (x, y) => title && $$(".word", title).concat(title.querySelector(".word") ? [] : [title]).some((w) => { const r = w.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
-    if (title) {
+    if (title && FINE) {
       let n = 0, tm = 0;
       // repeated clicks would otherwise start selecting whatever sits under the title
       document.addEventListener("mousedown", (e) => { if (e.detail > 1 && onTitle(e.clientX, e.clientY)) e.preventDefault(); });
@@ -711,7 +713,7 @@
       if (typed.endsWith("paint")) { typed = ""; toy("paint"); }
       else if (typed.endsWith("destroy") && !busy()) { typed = ""; toy("destroy"); }
     });
-    console.log("%cpsst. the title can take five hits. and that blinking pixel is not just decoration.", "color:#ff6fcf;font-family:monospace");
+    console.log(FINE ? "%cpsst. the title can take five hits. and that blinking pixel is not just decoration." : "%cpsst. that blinking pixel is not just decoration.", "color:#ff6fcf;font-family:monospace");
   }
 
   // leave the tab and the site notices
