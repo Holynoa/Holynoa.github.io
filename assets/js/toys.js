@@ -141,6 +141,7 @@
     const dpr = Math.min(2, devicePixelRatio || 1);
     const layer = h(`<canvas class="destroy__cv" aria-hidden="true"></canvas>`);
     const fx = h(`<canvas class="destroy__fx" aria-hidden="true"></canvas>`);
+    const bugs = h(`<canvas class="destroy__fx destroy__bugs" aria-hidden="true"></canvas>`);   // crisp, full resolution, for the pixel termites
     const bar = h(`
       <div class="destroy__bar" role="toolbar" aria-label="destroy.exe">
         <span class="destroy__name">destroy.exe</span>
@@ -154,19 +155,20 @@
         <button type="button" class="tg" data-act="fix">Fix it</button>
         <button type="button" class="tg" data-act="exit">Close</button>
       </div>`);
-    document.body.append(layer, fx, bar);
+    document.body.append(layer, fx, bugs, bar);
     document.body.classList.add("is-destroying");
-    const ctx = layer.getContext("2d"), fctx = fx.getContext("2d");
+    const ctx = layer.getContext("2d"), fctx = fx.getContext("2d"), bctx = bugs.getContext("2d");
     const size = () => {
       // keep what was broken when the window changes size
       const keepImg = layer.width ? ctx.getImageData(0, 0, layer.width, layer.height) : null;
       layer.width = innerWidth * dpr; layer.height = innerHeight * dpr;
-      fx.width = innerWidth; fx.height = innerHeight;   // soft fire and tiny bugs do not need retina pixels
+      fx.width = innerWidth; fx.height = innerHeight;   // soft fire does not need retina pixels
+      bugs.width = innerWidth * dpr; bugs.height = innerHeight * dpr;
       if (keepImg) ctx.putImageData(keepImg, 0, 0);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); fctx.setTransform(1, 0, 0, 1, 0, 0); bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     size(); addEventListener("resize", size);
-    D = { layer, fx, bar, tool: "hammer", down: false, parts: [], raf: 0, gunT: 0, stampN: 0, size };
+    D = { layer, fx, bugs, bar, tool: "hammer", down: false, parts: [], raf: 0, gunT: 0, stampN: 0, size };
 
     const pink = css("--pink") || "#ff6fcf";
     // shake the page and the damage, but never <body> itself: a transform there would unpin the fixed layers
@@ -271,6 +273,7 @@
           strokes.push({ pts, w: rnd(1, 1.6), d0: rr - 30 });
         });
       });
+      hitTermites(x, y, 34, "squash");
       drawCrack(strokes, () => crushed(x, y, r0), R);
       shards(x, y, 14, lightsOn() ? ["#0c0b0c", "#8f8780"] : ["#efe8de", "#ffffff", "#8f8780"], 1, 3);
       shake(6);
@@ -280,6 +283,7 @@
     function hole(x, y) {
       const r = rnd(5, 8), strokes = [], n = 4 + ((Math.random() * 5) | 0);
       for (let i = 0; i < n; i++) { const a = rnd(0, 6.283); grow(strokes, x + Math.cos(a) * r, y + Math.sin(a) * r, a, rnd(10, 38), rnd(0.9, 1.6), Math.random() < 0.4 ? 1 : 0, 0); }
+      hitTermites(x, y, 14, "shot");
       drawCrack(strokes, () => crushed(x, y, r), 40);
       flash(x, y);
       // spent shells fly out of the right side
@@ -291,6 +295,7 @@
     function bomb(x, y) {
       // the screen falls apart into pixels and leaves a ragged hole into the void
       const G = 8, R = rnd(46, 74);
+      hitTermites(x, y, R, "gone");
       ctx.save();
       for (let gy = -R; gy <= R; gy += G) for (let gx = -R; gx <= R; gx += G) {
         const d = Math.hypot(gx, gy) / R + rnd(-0.18, 0.18);
@@ -350,6 +355,7 @@
       g.addColorStop(0, "rgba(24,12,6,0.55)"); g.addColorStop(0.6, "rgba(24,12,6,0.25)"); g.addColorStop(1, "rgba(24,12,6,0)");
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y + 4, r * 1.6, 0, 6.283); ctx.fill(); ctx.restore();
       D.fires.push({ x, y, t: 0, s: rnd(0.85, 1.25), acc: 0 });
+      hitTermites(x, y, 30, "burn");
       if (D.fires.length > 24) D.fires.slice(0, D.fires.length - 24).forEach((f) => (f.die = f.die || f.t));
       D.lastFire = [x, y];
       run();
@@ -364,37 +370,85 @@
     // little hard-edged bits: glass chips, shells, the muzzle flash
     function flash(x, y) { D.parts.push({ kind: "flash", x, y, t: 0, life: 0.07, a: rnd(0, 6.283) }); run(); }
 
-    /* ---------- termites ---------- */
+    /* ---------- termites: pixel bugs that crawl out of a hole and eat the screen ---------- */
+    // drawn pixel by pixel, head up. a antenna tip, A antenna, m mandible, H head edge, h head, o head light,
+    // n neck, d dark segment, b abdomen, t abdomen stripe
+    const BUG = [
+      "..a.......a..", "...a.....a...", "...A.....A...", "....A...A....",
+      "....mHHHm....", "...HhhhhhH...", "...HhooohH...", "...HhhhhhH...", "....HhhhH....",
+      ".....nnn.....", "....dnnnd....", "....bbbbb....", "...btttttb...", "...dbbbbbd...",
+      "...btttttb...", "...dbbbbbd...", "...btttttb...", "....dbbbd....", "....btttb....",
+      ".....dbd.....", "......d......",
+    ];
+    // two leg poses for the left side (the right side mirrors them in the opposite pose)
+    const LEGS = [
+      [[2, 8], [1, 7], [1, 6], [0, 5], [3, 10], [2, 10], [1, 11], [0, 12], [2, 13], [1, 14], [1, 15], [0, 16]],
+      [[2, 8], [1, 8], [0, 7], [0, 6], [3, 10], [2, 11], [1, 12], [1, 13], [2, 14], [1, 15], [0, 16], [0, 17]],
+    ];
+    const BUG_COL = { a: "#f2c9a0", A: "#5a1c10", m: "#3a0f08", H: "#6b2010", h: "#d8541e", o: "#f08a3c", n: "#8a3a1e", d: "#6e3018", b: "#a8582e", t: "#e0a874", l: "#8c2f1c" };
+    const CHAR_COL = { a: "#5a5450", A: "#1a1716", m: "#0d0b0a", H: "#1d1918", h: "#3a3330", o: "#4a423d", n: "#2a2523", d: "#191615", b: "#2e2826", t: "#4d4540", l: "#221e1c" };
+    const bugFrame = (pose, cols) => {
+      const cv = document.createElement("canvas"); cv.width = 13; cv.height = 21;
+      const g = cv.getContext("2d");
+      BUG.forEach((row, y) => [...row].forEach((c, x) => { if (cols[c]) { g.fillStyle = cols[c]; g.fillRect(x, y, 1, 1); } }));
+      g.fillStyle = cols.l;
+      LEGS[pose].forEach(([x, y]) => g.fillRect(x, y, 1, 1));
+      LEGS[1 - pose].forEach(([x, y]) => g.fillRect(12 - x, y, 1, 1));
+      return cv;
+    };
+    const BUGS = [bugFrame(0, BUG_COL), bugFrame(1, BUG_COL)], CHARRED = bugFrame(0, CHAR_COL);
+    const BUG_K = 1.7;   // screen pixels per sprite pixel
+
     function nest(x, y) {
-      const n = 9 + ((Math.random() * 4) | 0);
-      for (let i = 0; i < n && D.termites.length < 80; i++) {
-        const a = rnd(0, 6.283);
-        D.termites.push({ x: x + Math.cos(a) * rnd(2, 10), y: y + Math.sin(a) * rnd(2, 10), a, turn: 0, v: rnd(26, 46), ph: rnd(0, 6), pause: 0, bite: rnd(2.6, 3.8), t: 0, life: rnd(24, 36), k: rnd(0.9, 1.15) });
+      // a small hole gets chewed open first, then they crawl out of it one at a time
+      ctx.save();
+      ctx.fillStyle = "#060506";
+      ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.283, d = rnd(4, 7); i ? ctx.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d) : ctx.moveTo(x + Math.cos(a) * d, y + Math.sin(a) * d); } ctx.closePath(); ctx.fill();
+      for (let i = 0; i < 14; i++) { const a = rnd(0, 6.283), d = rnd(7, 13); ctx.fillStyle = `rgba(${lightsOn() ? "70,52,32" : "214,196,168"},${rnd(0.25, 0.6)})`; ctx.fillRect(x + Math.cos(a) * d, y + Math.sin(a) * d, rnd(0.8, 1.6), rnd(0.8, 1.6)); }
+      ctx.restore();
+      const n = 6 + ((Math.random() * 4) | 0);
+      let wait = rnd(0.2, 0.5);
+      for (let i = 0; i < n && D.termites.length < 60; i++) {
+        D.termites.push({ x, y, a: rnd(0, 6.283), turn: 0, v: rnd(24, 40), ph: rnd(0, 6), pause: 0, bite: rnd(3.2, 4.4), t: -wait, life: rnd(26, 38), dead: null });
+        wait += rnd(0.25, 0.9);
       }
-      shake(1);
       run();
     }
-    // a pale little body, a brown head with mandibles, six legs that step while it walks
-    function drawTermite(m) {
-      const fade = Math.min(1, (m.life - m.t) / 1.2), k = m.k * 1.5;
-      fctx.save();
-      fctx.globalAlpha = fade;
-      fctx.translate(m.x, m.y); fctx.rotate(m.a); fctx.scale(k, k);
-      const step = Math.sin(m.ph * 6) * (m.pause > 0 ? 0 : 1);
-      fctx.strokeStyle = "rgba(90,60,30,0.95)"; fctx.lineWidth = 0.55;
-      [-1.6, 0.2, 1.8].forEach((lx, i) => {
-        const sw = (i % 2 ? step : -step) * 0.9;
-        fctx.beginPath(); fctx.moveTo(lx, 0); fctx.lineTo(lx + sw - 0.6, -3.2); fctx.moveTo(lx, 0); fctx.lineTo(lx - sw - 0.6, 3.2); fctx.stroke();
+    function drawTermite(m, img, alpha = 1, sx = 1, sy = 1, c = bctx) {
+      c.save();
+      c.globalAlpha = alpha; c.imageSmoothingEnabled = false;
+      c.translate(Math.round(m.x), Math.round(m.y)); c.rotate(Math.round((m.a + Math.PI / 2) / (Math.PI / 8)) * (Math.PI / 8)); c.scale(BUG_K * sx, BUG_K * sy);
+      c.drawImage(img, -6.5, -10.5);
+      c.restore();
+    }
+    // a bug under the hammer or a bullet: a smear of blood with the flattened body in it
+    function squash(m, big) {
+      const r = big ? rnd(10, 14) : rnd(6, 9);
+      ctx.save();
+      ctx.fillStyle = "rgba(168,16,24,0.95)";
+      ctx.beginPath();
+      for (let i = 0; i < 18; i++) { const a = (i / 18) * 6.283, d = r * rnd(0.65, 1.3); i ? ctx.lineTo(m.x + Math.cos(a) * d, m.y + Math.sin(a) * d) : ctx.moveTo(m.x + Math.cos(a) * d, m.y + Math.sin(a) * d); }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(96,6,12,0.85)";
+      ctx.beginPath(); ctx.arc(m.x + rnd(-2, 2), m.y + rnd(-2, 2), r * 0.45, 0, 6.283); ctx.fill();
+      // droplets thrown off the impact
+      for (let i = 0; i < (big ? 12 : 6); i++) {
+        const a = rnd(0, 6.283), d = r * rnd(1.3, 2.8), s = rnd(0.8, 2.2);
+        ctx.fillStyle = `rgba(${Math.random() < 0.5 ? "176,18,26" : "118,10,16"},0.92)`;
+        ctx.beginPath(); ctx.arc(m.x + Math.cos(a) * d, m.y + Math.sin(a) * d, s, 0, 6.283); ctx.fill();
+      }
+      ctx.restore();
+      drawTermite(m, BUGS[0], 0.85, 1.35, 0.6, ctx);
+      m.dead = { kind: "gone", t: 0 };
+    }
+    function burn(m) { m.dead = { kind: "burn", t: 0 }; }
+    // the other tools reach the bugs too
+    function hitTermites(x, y, r, how) {
+      D.termites.forEach((m) => {
+        if (m.dead || m.t < 0 || Math.hypot(m.x - x, m.y - y) > r) return;
+        if (how === "burn") burn(m); else if (how === "squash") squash(m, true); else if (how === "shot") squash(m, false);
+        else m.dead = { kind: "gone", t: 0 };
       });
-      fctx.fillStyle = "#ead9bb";
-      fctx.beginPath(); fctx.ellipse(-2.6, 0, 3.4, 1.9, 0, 0, 6.283); fctx.fill();            // abdomen
-      fctx.fillStyle = "#d8c29c";
-      fctx.beginPath(); fctx.ellipse(0.8, 0, 1.5, 1.2, 0, 0, 6.283); fctx.fill();             // thorax
-      fctx.fillStyle = "#8a4a1c";
-      fctx.beginPath(); fctx.ellipse(3.2, 0, 1.6, 1.4, 0, 0, 6.283); fctx.fill();             // head
-      fctx.strokeStyle = "#3a1e0a"; fctx.lineWidth = 0.5;
-      fctx.beginPath(); fctx.moveTo(4.4, -0.6); fctx.lineTo(5.6, -0.2); fctx.moveTo(4.4, 0.6); fctx.lineTo(5.6, 0.2); fctx.stroke();   // mandibles
-      fctx.restore();
     }
 
     let last = 0;
@@ -405,6 +459,7 @@
         if (!D) return;
         const dt = Math.min(0.033, (now - last) / 1000); last = now;
         fctx.clearRect(0, 0, innerWidth, innerHeight);
+        if (D.termites.length || D.bugsDirty) { bctx.clearRect(0, 0, innerWidth, innerHeight); D.bugsDirty = D.termites.length > 0; }
         const light = lightsOn();
 
         // flames
@@ -434,30 +489,45 @@
         // termites: they wander, stop now and then, and eat a ragged tunnel through whatever is under them
         if (D.termites.length) {
           ctx.save();
-          D.termites = D.termites.filter((m) => (m.t += dt) < m.life);
+          D.termites = D.termites.filter((m) => (m.t += dt) < m.life && !(m.dead && (m.dead.kind === "gone" || m.dead.t > 1.4)));
           D.termites.forEach((m) => {
+            if (m.t < 0) return;                       // still down in the hole
+            if (m.dead) {
+              // burning: it curls up, smokes and goes black, then leaves a little scorch
+              m.dead.t += dt;
+              const u = m.dead.t / 1.4;
+              if (u < 0.45 && D.flames.length < 1400) emit(m.x, m.y, 0.35, 2);
+              drawTermite(m, u < 0.25 ? BUGS[0] : CHARRED, 1 - u * u, 1 - u * 0.25, 1 - u * 0.25);
+              if (m.dead.t + dt > 1.4 && !m.dead.mark) {
+                m.dead.mark = true;
+                ctx.fillStyle = "rgba(20,14,10,0.7)"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, 6.283); ctx.fill();
+              }
+              return;
+            }
+            // walking into a fire is the end of it
+            if (D.fires.some((f) => f.die === undefined && Math.hypot(f.x - m.x, f.y - m.y) < 26 * f.s)) { burn(m); return; }
             if (m.pause > 0) { m.pause -= dt; }
             else {
               m.turn += rnd(-6, 6) * dt; m.turn *= 1 - 2.5 * dt;
               m.a += m.turn * dt * 3;
-              // keep away from the edges of the screen
               const W = innerWidth, H = innerHeight, mg = 40;
               if (m.x < mg || m.x > W - mg || m.y < mg || m.y > H - mg) { const ta = Math.atan2(H / 2 - m.y, W / 2 - m.x); m.a += Math.sin(ta - m.a) * 4 * dt; }
-              const sp = m.v * (m.t < 0.4 ? 2.4 : 1);
-              m.x += Math.cos(m.a) * sp * dt; m.y += Math.sin(m.a) * sp * dt; m.ph += sp * dt * 0.9;
+              const sp = m.v * Math.min(1, m.t / 0.8);   // they ease out of the hole instead of shooting out
+              m.x += Math.cos(m.a) * sp * dt; m.y += Math.sin(m.a) * sp * dt; m.ph += sp * dt;
               if (Math.random() < 0.25 * dt) m.pause = rnd(0.3, 1.1);
-              // the bite: a slightly ragged hole right under the head
-              const hx = m.x + Math.cos(m.a) * 5, hy = m.y + Math.sin(m.a) * 5;
-              ctx.fillStyle = "#060506";
-              ctx.beginPath(); ctx.arc(hx + rnd(-0.8, 0.8), hy + rnd(-0.8, 0.8), m.bite * rnd(0.85, 1.15), 0, 6.283); ctx.fill();
-              // crumbs left beside the tunnel, so the trail shows even on the black
-              if (Math.random() < 0.35) {
-                const side = Math.random() < 0.5 ? 1 : -1, o = m.bite + rnd(0.5, 2.5);
-                ctx.fillStyle = `rgba(${lightsOn() ? "70,52,32" : "214,196,168"},${rnd(0.25, 0.6)})`;
-                ctx.fillRect(hx + Math.cos(m.a + 1.57) * o * side, hy + Math.sin(m.a + 1.57) * o * side, rnd(0.6, 1.4), rnd(0.6, 1.4));
+              const hx = m.x + Math.cos(m.a) * 12, hy = m.y + Math.sin(m.a) * 12;
+              if (m.t > 0.6) {
+                ctx.fillStyle = "#060506";
+                ctx.beginPath(); ctx.arc(hx + rnd(-0.8, 0.8), hy + rnd(-0.8, 0.8), m.bite * rnd(0.85, 1.15), 0, 6.283); ctx.fill();
+                if (Math.random() < 0.35) {
+                  const side = Math.random() < 0.5 ? 1 : -1, o = m.bite + rnd(0.5, 2.5);
+                  ctx.fillStyle = `rgba(${lightsOn() ? "70,52,32" : "214,196,168"},${rnd(0.25, 0.6)})`;
+                  ctx.fillRect(hx + Math.cos(m.a + 1.57) * o * side, hy + Math.sin(m.a + 1.57) * o * side, rnd(0.6, 1.4), rnd(0.6, 1.4));
+                }
               }
             }
-            drawTermite(m);
+            const fade = Math.min(1, (m.life - m.t) / 1.2, m.t / 0.3);
+            drawTermite(m, BUGS[m.pause > 0 ? 0 : (Math.floor(m.ph / 4) % 2)], fade);
           });
           ctx.restore();
         }
@@ -557,7 +627,7 @@
     if (!D) return;
     cancelAnimationFrame(D.raf); clearTimeout(D.gunT);
     removeEventListener("resize", D.size);
-    D.layer.remove(); D.fx.remove(); D.bar.remove(); D.tool_el.remove();
+    D.layer.remove(); D.fx.remove(); D.bugs.remove(); D.bar.remove(); D.tool_el.remove();
     document.body.classList.remove("is-destroying", "is-tooling");
     DE.style.overflow = ""; window.HNLenis?.start();
     D = null;
