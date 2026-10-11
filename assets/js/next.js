@@ -1043,27 +1043,62 @@
       </div>
       <div class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
         <button class="lightbox__close mono" type="button">Close ✕</button>
+        <button class="lightbox__nav lightbox__nav--prev mono" type="button" aria-label="Previous piece">← Prev</button>
         <img alt="">
+        <button class="lightbox__nav lightbox__nav--next mono" type="button" aria-label="Next piece">Next →</button>
         <span class="lightbox__cap mono"></span>
+        <span class="lightbox__count mono" aria-live="polite"></span>
       </div>`;
     stage = $(".a-head");
     $(".a-head__obj").appendChild(makeObj(S.archiveObj, { x: 72, y: 52, rot: -4, depth: 1, k: 1.9, amp: 1.2 }).el);
     flicker(glyphs($(".a-head h1"), { ratio: 0.3, seed: 4 }), 1500);
     $$(".a-item .frame").forEach(reveal);
 
-    const lb = $(".lightbox"), lbImg = $("img", lb), cap = $(".lightbox__cap", lb);
-    let opener = null;
+    const lb = $(".lightbox"), lbImg = $("img", lb), cap = $(".lightbox__cap", lb), count = $(".lightbox__count", lb);
+    let opener = null, cur = 0;
+    const isOpen = () => lb.classList.contains("is-open");
     const close = () => { lb.classList.remove("is-open"); opener && opener.focus(); };
+    // show piece i; the neighbours load quietly in the background so flipping feels instant
+    const show = (i, dir = 0) => {
+      cur = (i + A.length) % A.length;
+      const a = A[cur];
+      const swap = () => {
+        lbImg.src = img(a.src); lbImg.alt = a.title;
+        cap.textContent = `${a.title} · ${a.kind}`;
+        count.textContent = `${pad(cur + 1)} / ${pad(A.length)}`;
+      };
+      if (dir && !REDUCED) {
+        lbImg.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${-dir * 24}px)` }], { duration: 140, easing: "ease-in" }).onfinish = () => {
+          swap();
+          const go = () => lbImg.animate([{ opacity: 0, transform: `translateX(${dir * 24}px)` }, { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "ease-out" });
+          lbImg.complete ? go() : lbImg.addEventListener("load", go, { once: true });
+        };
+      } else swap();
+      [cur - 1, cur + 1].forEach((j) => { const n = A[(j + A.length) % A.length]; if (n) new Image().src = img(n.src); });
+    };
     $$(".a-item").forEach((b) => b.addEventListener("click", () => {
-      const a = A[+b.dataset.i];
       opener = b;
-      lbImg.src = img(a.src); lbImg.alt = a.title; cap.textContent = `${a.title} · ${a.kind}`;
+      show(+b.dataset.i);
       lb.classList.add("is-open");
       $(".lightbox__close", lb).focus();
     }));
     $(".lightbox__close", lb).addEventListener("click", close);
+    $(".lightbox__nav--prev", lb).addEventListener("click", () => show(cur - 1, -1));
+    $(".lightbox__nav--next", lb).addEventListener("click", () => show(cur + 1, 1));
     lb.addEventListener("click", (e) => { if (e.target === lb) close(); });
-    addEventListener("keydown", (e) => { if (e.key === "Escape" && lb.classList.contains("is-open")) close(); });
+    addEventListener("keydown", (e) => {
+      if (!isOpen()) return;
+      if (e.key === "Escape") close();
+      else if (e.key === "ArrowRight") { e.preventDefault(); show(cur + 1, 1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); show(cur - 1, -1); }
+    });
+    // swipe on touch screens
+    let sx = 0, sy = 0;
+    lb.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    lb.addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) show(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   /* ============================================================
