@@ -397,20 +397,14 @@
       return cv;
     };
     const BUGS = [bugFrame(0, BUG_COL), bugFrame(1, BUG_COL)], CHARRED = bugFrame(0, CHAR_COL);
-    const BUG_K = 1.7;   // screen pixels per sprite pixel
+    const BUG_K = 1;   // screen pixels per sprite pixel
 
     function nest(x, y) {
-      // a small hole gets chewed open first, then they crawl out of it one at a time
-      ctx.save();
-      ctx.fillStyle = "#060506";
-      ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.283, d = rnd(4, 7); i ? ctx.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d) : ctx.moveTo(x + Math.cos(a) * d, y + Math.sin(a) * d); } ctx.closePath(); ctx.fill();
-      for (let i = 0; i < 14; i++) { const a = rnd(0, 6.283), d = rnd(7, 13); ctx.fillStyle = `rgba(${lightsOn() ? "70,52,32" : "214,196,168"},${rnd(0.25, 0.6)})`; ctx.fillRect(x + Math.cos(a) * d, y + Math.sin(a) * d, rnd(0.8, 1.6), rnd(0.8, 1.6)); }
-      ctx.restore();
-      const n = 6 + ((Math.random() * 4) | 0);
-      let wait = rnd(0.2, 0.5);
+      // a click drops a few of them right there, already on the move
+      const n = 3 + (Math.random() < 0.5 ? 1 : 0);
       for (let i = 0; i < n && D.termites.length < 60; i++) {
-        D.termites.push({ x, y, a: rnd(0, 6.283), turn: 0, v: rnd(24, 40), ph: rnd(0, 6), pause: 0, bite: rnd(3.2, 4.4), t: -wait, life: rnd(26, 38), dead: null });
-        wait += rnd(0.25, 0.9);
+        const a = rnd(0, 6.283);
+        D.termites.push({ x: x + Math.cos(a) * rnd(4, 12), y: y + Math.sin(a) * rnd(4, 12), a: a + rnd(-0.6, 0.6), turn: 0, v: rnd(22, 36), ph: rnd(0, 6), pause: 0, bite: rnd(2.3, 3.1), t: 0, life: rnd(26, 38), dead: null });
       }
       run();
     }
@@ -423,7 +417,7 @@
     }
     // a bug under the hammer or a bullet: a smear of blood with the flattened body in it
     function squash(m, big) {
-      const r = big ? rnd(10, 14) : rnd(6, 9);
+      const r = big ? rnd(7, 10) : rnd(5, 7);
       ctx.save();
       ctx.fillStyle = "rgba(168,16,24,0.95)";
       ctx.beginPath();
@@ -438,14 +432,14 @@
         ctx.beginPath(); ctx.arc(m.x + Math.cos(a) * d, m.y + Math.sin(a) * d, s, 0, 6.283); ctx.fill();
       }
       ctx.restore();
-      drawTermite(m, BUGS[0], 0.85, 1.35, 0.6, ctx);
+      drawTermite(m, BUGS[0], 0.9, 1.35, 0.6, ctx);
       m.dead = { kind: "gone", t: 0 };
     }
     function burn(m) { m.dead = { kind: "burn", t: 0 }; }
     // the other tools reach the bugs too
     function hitTermites(x, y, r, how) {
       D.termites.forEach((m) => {
-        if (m.dead || m.t < 0 || Math.hypot(m.x - x, m.y - y) > r) return;
+        if (m.dead || Math.hypot(m.x - x, m.y - y) > r) return;
         if (how === "burn") burn(m); else if (how === "squash") squash(m, true); else if (how === "shot") squash(m, false);
         else m.dead = { kind: "gone", t: 0 };
       });
@@ -491,7 +485,6 @@
           ctx.save();
           D.termites = D.termites.filter((m) => (m.t += dt) < m.life && !(m.dead && (m.dead.kind === "gone" || m.dead.t > 1.4)));
           D.termites.forEach((m) => {
-            if (m.t < 0) return;                       // still down in the hole
             if (m.dead) {
               // burning: it curls up, smokes and goes black, then leaves a little scorch
               m.dead.t += dt;
@@ -505,18 +498,18 @@
               return;
             }
             // walking into a fire is the end of it
-            if (D.fires.some((f) => f.die === undefined && Math.hypot(f.x - m.x, f.y - m.y) < 26 * f.s)) { burn(m); return; }
+            if (D.fires.some((f) => f.die === undefined && Math.hypot(f.x - m.x, f.y - m.y) < 22 * f.s)) { burn(m); return; }
             if (m.pause > 0) { m.pause -= dt; }
             else {
               m.turn += rnd(-6, 6) * dt; m.turn *= 1 - 2.5 * dt;
               m.a += m.turn * dt * 3;
               const W = innerWidth, H = innerHeight, mg = 40;
               if (m.x < mg || m.x > W - mg || m.y < mg || m.y > H - mg) { const ta = Math.atan2(H / 2 - m.y, W / 2 - m.x); m.a += Math.sin(ta - m.a) * 4 * dt; }
-              const sp = m.v * Math.min(1, m.t / 0.8);   // they ease out of the hole instead of shooting out
+              const sp = m.v;
               m.x += Math.cos(m.a) * sp * dt; m.y += Math.sin(m.a) * sp * dt; m.ph += sp * dt;
               if (Math.random() < 0.25 * dt) m.pause = rnd(0.3, 1.1);
-              const hx = m.x + Math.cos(m.a) * 12, hy = m.y + Math.sin(m.a) * 12;
-              if (m.t > 0.6) {
+              const hx = m.x + Math.cos(m.a) * 7, hy = m.y + Math.sin(m.a) * 7;
+              if (m.t > 0.15) {
                 ctx.fillStyle = "#060506";
                 ctx.beginPath(); ctx.arc(hx + rnd(-0.8, 0.8), hy + rnd(-0.8, 0.8), m.bite * rnd(0.85, 1.15), 0, 6.283); ctx.fill();
                 if (Math.random() < 0.35) {
@@ -526,7 +519,7 @@
                 }
               }
             }
-            const fade = Math.min(1, (m.life - m.t) / 1.2, m.t / 0.3);
+            const fade = Math.min(1, (m.life - m.t) / 1.2);
             drawTermite(m, BUGS[m.pause > 0 ? 0 : (Math.floor(m.ph / 4) % 2)], fade);
           });
           ctx.restore();
