@@ -103,6 +103,7 @@
   let hovered = null;
   let kbFocus = null;
   let autoFocus = null;    // touch screens: objects take turns being "looked at"
+  let autoNext = null, autoSkips = 0; // touch screens: hands the turn to the next object
 
   // o = {src, cm, alt}; opts = {href, label, num, kind, k, rot, depth, x, y, amp}
   function makeObj(o, opts = {}) {
@@ -379,6 +380,27 @@
     else { l = tx - (c >= 0 ? 0 : tw); t = s < 0 ? ty - th - 8 : ty + 8; }
     return { ax, ay, box: { l, t, r: l + tw, b: t + th }, hr };
   }
+  // try eight directions, keep the one where the text sits on empty black.
+  // Text on the page (title, intro, header) costs far more than another object, so the name never covers words.
+  // Expects the callout text for o to be filled in already (its size is measured).
+  function calloutDir(o) {
+    const tw = CO.txt.offsetWidth, th = CO.txt.offsetHeight;
+    const hr = ORB.el.getBoundingClientRect();
+    const rel = (r, p) => ({ l: r.left - hr.left - p, t: r.top - hr.top - p, r: r.right - hr.left + p, b: r.bottom - hr.top + p });
+    const avoid = OBJS.filter((x) => x !== o && x.ready).map((x) => rel(x.im.getBoundingClientRect(), 10));
+    const words = $$(".hero__title .word, .hero__intro, .hero__hint, .site-header nav, .brand").map((e) => rel(e.getBoundingClientRect(), 12));
+    let best = 0, bs = Infinity, bestHard = 0;
+    for (let k = 0; k < 8; k++) {
+      const dir = (k * TAU) / 8;
+      const b = calloutGeom(o, dir, tw, th).box;
+      const hard = words.reduce((acc, a) => acc + rectsOverlap(b, a), 0);
+      let sc = avoid.reduce((acc, a) => acc + rectsOverlap(b, a), 0) + hard * 40;
+      const off = (Math.max(0, 8 - b.l) + Math.max(0, b.r - hr.width + 8)) * th + (Math.max(0, 8 - b.t) + Math.max(0, b.b - hr.height + 8)) * tw;
+      sc += off * 4 + (k === 0 || k === 4 ? 0 : k % 2 ? 600 : 300);
+      if (sc < bs) { bs = sc; best = dir; bestHard = hard + off; }
+    }
+    return { dir: best, clear: bestHard === 0 };
+  }
   function showCallout(o) {
     if (!CO.el) return;
     if (!o || !o.cap || !o.orbit) { CO.el.classList.remove("is-on"); CO.obj = null; return; }
@@ -387,21 +409,9 @@
     nm.textContent = o.cap.name;
     const gs = glyphs(nm, { ratio: 0.3, seed: o.cap.name.length + 3 });
     $(".callout__kind", CO.el).textContent = o.cap.kind;
-    const tw = CO.txt.offsetWidth, th = CO.txt.offsetHeight;
-    // try eight directions, keep the one where the text sits on empty black
-    const hr = ORB.el.getBoundingClientRect();
-    const rel = (r, p) => ({ l: r.left - hr.left - p, t: r.top - hr.top - p, r: r.right - hr.left + p, b: r.bottom - hr.top + p });
-    const avoid = OBJS.filter((x) => x !== o && x.ready).map((x) => rel(x.im.getBoundingClientRect(), 10));
-    $$(".hero__title .word, .hero__intro, .hero__hint, .site-header nav, .brand").forEach((e) => avoid.push(rel(e.getBoundingClientRect(), 12)));
-    let best = 0, bs = Infinity;
-    for (let k = 0; k < 8; k++) {
-      const dir = (k * TAU) / 8;
-      const b = calloutGeom(o, dir, tw, th).box;
-      let sc = avoid.reduce((acc, a) => acc + rectsOverlap(b, a), 0);
-      const off = (Math.max(0, 8 - b.l) + Math.max(0, b.r - hr.width + 8)) * th + (Math.max(0, 8 - b.t) + Math.max(0, b.b - hr.height + 8)) * tw;
-      sc += off * 4 + (k === 0 || k === 4 ? 0 : k % 2 ? 600 : 300);
-      if (sc < bs) { bs = sc; best = dir; }
-    }
+    const { dir: best, clear } = calloutDir(o);
+    // small touch screens: if the name can only land on top of the title or the intro, skip it
+    if (!FINE && !clear) { CO.el.classList.remove("is-on"); CO.obj = null; return; }
     CO.dir = best; CO.obj = o;
     CO.el.classList.remove("is-on"); void CO.el.offsetWidth;
     placeCallout();
@@ -438,6 +448,11 @@
       if (stage) stage.classList.toggle("has-focus", !!hit);
       if (cursorEl) { setCursor(hit && hit.href && !hit.orbit ? "open" : null); cursorEl.classList.toggle("is-on-obj", !!(hit && hit.href)); }
       showCallout(hit);
+      // touch screens: no clean spot for this object's name right now, so let it pass its turn
+      if (hit && hit === autoFocus && !CO.obj) {
+        autoFocus = autoNext && autoSkips++ < OBJS.length ? autoNext() : null;
+        hovered = null; if (stage) stage.classList.remove("has-focus");
+      }
       if (hit && !REDUCED && FINE && !kbFocus) pxStart(hit);
     }
 
@@ -861,10 +876,11 @@
     // touch screens: the objects take turns introducing themselves
     if (!FINE && !REDUCED) {
       let k = 0;
+      autoNext = () => { const ready = OBJS.filter((o) => o.ready && o.orbit); return ready.length ? ready[k++ % ready.length] : null; };
       setInterval(() => {
         if (document.hidden || hero.getBoundingClientRect().bottom < innerHeight * 0.5) { autoFocus = null; return; }
-        const ready = OBJS.filter((o) => o.ready && o.orbit);
-        autoFocus = ready.length ? ready[k++ % ready.length] : null;
+        autoSkips = 0;
+        autoFocus = autoNext();
       }, 3200);
     }
 
