@@ -39,8 +39,9 @@ window.AVATAR = [
 
 /* Builds an <svg>.
    outline: add a 1-cell contour (class px-noa__line, coloured from CSS) so black hair reads on a dark page.
-   grid: draw faint graph-paper lines and a paper tile behind the figure. */
-window.avatarSVG = function ({ grid = false, pad = 2, outline = false } = {}) {
+   grid: draw faint graph-paper lines and a paper tile behind the figure.
+   blink: add the closed eyes as a hidden layer (class px-noa__blink), shown from CSS. */
+window.avatarSVG = function ({ grid = false, pad = 2, outline = false, blink = false } = {}) {
   const R = window.AVATAR, W = R[0].length, H = R.length;
   const INK = "#080708", PAPER = "#f4efe7", PINK = "#ff6fcf", LINE = "#ddd6cb";
   const vw = W + pad * 2, vh = H + pad * 2;
@@ -72,5 +73,13 @@ window.avatarSVG = function ({ grid = false, pad = 2, outline = false } = {}) {
       x = e;
     }
   });
+  if (blink) {
+    // closed eyes: paper over the open eyes and liner, then one line of lashes
+    const cell = (x, y, f) => `<rect x="${x + pad}" y="${y + pad}" width="1" height="1" fill="${f}"/>`;
+    let b = "";
+    [[5, 11], [6, 11], [6, 12], [6, 13], [13, 11], [14, 11], [13, 12], [13, 13]].forEach(([x, y]) => (b += cell(x, y, PAPER)));
+    [[5, 12], [6, 12], [13, 12], [14, 12]].forEach(([x, y]) => (b += cell(x, y, INK)));
+    out += `<g class="px-noa__blink">${b}</g>`;
+  }
   return `<svg class="px-noa" viewBox="0 0 ${vw} ${vh}" shape-rendering="crispEdges" role="img" aria-label="Pixel Noa: long black hair with bangs, winged liner, white shirt, black pants">${out}</svg>`;
 };

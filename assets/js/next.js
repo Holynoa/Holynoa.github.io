@@ -1129,16 +1129,25 @@
     { title: "Education", rows: [
       ["Class of 2025", "B.Des. Visual Communication · HIT", "Holon Institute of Technology. Graduated with high honors for the final project Anemoia."],
     ] },
-    { title: "Disciplines", rows: [
-      ["Design", "Branding & visual language · UX / UI · Editorial & print"],
-      ["Moving image", "Motion graphics · Post-production & compositing · Generative art"],
+    // each discipline points at the projects that show it
+    { title: "Disciplines", skills: [
+      ["Motion graphics", ["anemoia", "curious-incident"]],
+      ["Branding & visual language", ["clarity", "surface-deep"]],
+      ["UX / UI design", ["xhibit", "clarity"]],
+      ["Post-production & compositing", ["anemoia", "curious-incident"]],
+      ["Editorial & print", ["unfolded", "clarity"]],
+      ["Generative art", ["anemoia"]],
     ] },
     { title: "Tools", rows: [
       ["Adobe", "After Effects · Premiere Pro · Illustrator · Photoshop · InDesign"],
       ["Other", "Figma"],
     ] },
-    { title: "Languages", rows: [["Hebrew", "Fluent"], ["English", "Fluent"], ["Russian", "Basic"]] },
+    { title: "Languages", langs: [["Hebrew", 3, "Fluent"], ["English", 3, "Fluent"], ["Russian", 1, "Basic"]] },
   ];
+
+  // a pixel heart, like the ones on Noa's first resume
+  const heart = (on) => `<svg class="cvx__heart${on ? "" : " is-off"}" viewBox="0 0 7 6" aria-hidden="true">${
+    [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."].map((r, y) => [...r].map((c, x) => (c === "#" ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : "")).join("")).join("")}</svg>`;
 
   function about() {
     const main = $("main");
@@ -1161,7 +1170,7 @@
             </ul>
             <div class="cvx">
               <div class="cvx__bar">
-                ${window.avatarSVG ? `<span class="cvx__noa" aria-hidden="true">${window.avatarSVG({ outline: true, pad: 1 })}</span>` : ""}
+                ${window.avatarSVG ? `<span class="cvx__noa" aria-hidden="true" data-cursor="poke">${window.avatarSVG({ outline: true, pad: 1, blink: true })}</span>` : ""}
                 <button class="cvx__toggle" type="button" aria-expanded="false" aria-controls="cvx-body">
                   <span class="cvx__t">Resume</span><span class="cvx__state mono"><span class="cvx__open">Expand</span><span class="cvx__close">Collapse</span><i aria-hidden="true"></i></span>
                 </button>
@@ -1172,7 +1181,12 @@
                   ${CV.map((sec) => `
                     <section class="cvx__sec">
                       <h3 class="mono">${esc(sec.title)}</h3>
-                      <ul>${sec.rows.map((r) => `<li><span class="mono">${esc(r[0])}</span><span><b>${esc(r[1])}</b>${r[2] ? `<em>${esc(r[2])}</em>` : ""}</span></li>`).join("")}</ul>
+                      ${sec.rows ? `<ul>${sec.rows.map((r) => `<li><span class="mono">${esc(r[0])}</span><span><b>${esc(r[1])}</b>${r[2] ? `<em>${esc(r[2])}</em>` : ""}</span></li>`).join("")}</ul>` : ""}
+                      ${sec.skills ? `
+                        <div class="cvx__skills">${sec.skills.map(([n, q]) => `<button type="button" class="cvx__skill" data-q="${q.join(" ")}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>
+                        <div class="cvx__work">${P.map((p) => `<a class="cvx__obj" href="${url("work/" + p.slug + "/")}" data-slug="${p.slug}"><span class="cvx__obj-img"><img src="${objSrc(p.obj.src)}" alt="" loading="lazy"></span><span class="mono">${esc(p.short || p.title)}</span></a>`).join("")}</div>
+                        <p class="cvx__hint mono">${FINE ? "Hover" : "Tap"} a discipline to see where it was used</p>` : ""}
+                      ${sec.langs ? `<ul class="cvx__langs">${sec.langs.map(([n, lv, w]) => `<li><span>${esc(n)}</span><span class="cvx__hearts" role="img" aria-label="${w}">${[0, 1, 2].map((i) => heart(i < lv)).join("")}</span><span class="mono">${w}</span></li>`).join("")}</ul>` : ""}
                     </section>`).join("")}
                 </div>
               </div>
@@ -1196,6 +1210,34 @@
       body.inert = !open;
       setTimeout(() => hasGSAP && window.ScrollTrigger && ScrollTrigger.refresh(), 650);
     });
+
+    // disciplines light up the projects that used them (hover on desktop, tap to pin)
+    const work = $(".cvx__work", cvx);
+    let pinned = null;
+    const show = (b) => {
+      const q = b ? b.dataset.q.split(" ") : [];
+      work.classList.toggle("is-filter", !!b);
+      $$(".cvx__obj", work).forEach((o) => o.classList.toggle("is-hit", q.includes(o.dataset.slug)));
+      $$(".cvx__skill", cvx).forEach((x) => x.classList.toggle("is-on", x === b));
+    };
+    $$(".cvx__skill", cvx).forEach((b) => {
+      if (FINE) { b.addEventListener("mouseenter", () => show(b)); b.addEventListener("mouseleave", () => show(pinned)); }
+      b.addEventListener("click", () => {
+        pinned = pinned === b ? null : b;
+        $$(".cvx__skill", cvx).forEach((x) => x.setAttribute("aria-pressed", String(x === pinned)));
+        show(pinned);
+      });
+    });
+
+    // pixel Noa blinks now and then, and hops when poked
+    const noa = $(".cvx__noa", cvx);
+    if (noa) {
+      noa.addEventListener("click", () => { noa.classList.remove("is-hop"); void noa.offsetWidth; noa.classList.add("is-hop"); });
+      if (!REDUCED) {
+        const blink = () => { noa.classList.add("is-blink"); setTimeout(() => noa.classList.remove("is-blink"), 150); setTimeout(blink, 2600 + Math.random() * 3400); };
+        setTimeout(blink, 1800);
+      }
+    }
     const pt = $(".about__portrait");
     if (!FINE) pt.addEventListener("click", () => pt.classList.toggle("is-seen"));
     if (hasGSAP && !REDUCED) {
