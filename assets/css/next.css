@@ -467,7 +467,7 @@ html[data-lights="on"] .px-noa__line { fill: transparent; }
 @keyframes cvx-hop { 40% { transform: translateY(-12px); } 70% { transform: translateY(-3px); } }
 .px-noa__blink { display: none; }
 .cvx__noa.is-blink .px-noa__blink { display: inline; }
-.cvx__toggle { flex: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 18px 0; text-align: left; }
+.cvx__toggle { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; text-align: left; }
 .cvx__t { font-family: var(--italic); font-size: clamp(28px, 2.6vw, 44px); line-height: 1; transition: color 0.2s; }
 .cvx__state { display: inline-flex; align-items: center; gap: 10px; color: var(--ash); transition: color 0.2s; }
 .cvx__state i { position: relative; width: 11px; height: 11px; }
