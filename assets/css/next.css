@@ -516,7 +516,7 @@ html[data-lights="on"] .px-noa__line { fill: transparent; }
 .cvx__langs .mono { color: var(--ash); text-align: right; }
 @media (max-width: 760px) {
   .cvx__sec li { grid-template-columns: 1fr; gap: 4px; }
-  .cvx__langs li { grid-template-columns: 1fr auto auto; gap: 14px; }
+  .cvx__langs li { grid-template-columns: 1fr auto 64px; gap: 14px; }
   .cvx__work { grid-template-columns: repeat(3, 1fr); }
   .cvx__noa { width: 46px; }
   .cvx__bar { gap: 14px; }
