@@ -1,0 +1,201 @@
+<!doctype html>
+<!--
+  Source of assets/Resume-Noa-Yaakobovitz.pdf (one A4 page).
+  Edit the text here, then rebuild the PDF:  node assets/cv/build-pdf.js
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Noa Yaakobovitz · Resume</title>
+<style>
+@font-face { font-family: "Lingo Pixel"; src: url("../fonts/lingo-pixel.woff2") format("woff2"); }
+@font-face { font-family: "Lingo Italic"; src: url("../fonts/lingo-italic.woff2") format("woff2"); }
+@font-face { font-family: "Geist"; src: url("../fonts/geist.woff2") format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+
+@page { size: A4; margin: 0; }
+:root {
+  --paper: #f4efe7;
+  --ink: #080708;
+  --ash: #6f6862;
+  --pink: #ff6fcf;
+  --pink-ink: #c2188a;   /* pink that still reads as text on paper */
+  --line: rgba(8, 7, 8, 0.16);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); }
+body {
+  width: 210mm; height: 297mm; overflow: hidden; position: relative;
+  padding: 15mm 15mm 12mm;
+  color: var(--ink);
+  font: 400 9pt/1.5 "Geist", Helvetica, Arial, sans-serif;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  display: flex; flex-direction: column;
+}
+a { color: inherit; text-decoration: none; }
+.mono { font-family: "Geist Mono", ui-monospace, monospace; font-size: 6.6pt; letter-spacing: 0.08em; text-transform: uppercase; }
+.px { font-family: "Lingo Pixel", "Geist", sans-serif; font-weight: 400; }
+.it { font-family: "Lingo Italic", "Geist", sans-serif; font-weight: 400; }
+
+/* ---------- head ---------- */
+.head { display: grid; grid-template-columns: 1fr 30mm; gap: 8mm; align-items: end; padding-bottom: 6mm; border-bottom: 1px solid var(--ink); }
+.head__top { display: flex; justify-content: space-between; margin-bottom: 5mm; color: var(--ash); }
+.head__top b { color: var(--ink); font-weight: 400; }
+.dot { display: inline-block; width: 1.6mm; height: 1.6mm; background: var(--pink); margin-right: 1.6mm; vertical-align: 0.1mm; }
+h1 { margin: 0; font-family: "Lingo Italic", sans-serif; font-weight: 400; font-size: 39pt; line-height: 0.92; letter-spacing: -0.01em; }
+h1 .px { font-size: 0.96em; }
+.role { margin: 3.2mm 0 0; font-size: 11.5pt; line-height: 1.35; font-weight: 300; letter-spacing: -0.01em; max-width: 120mm; }
+.avatar { width: 30mm; margin-bottom: -6mm; }
+.avatar svg { display: block; width: 100%; height: auto; }
+.px-avatar__blink, .px-avatar__talk { display: none; }
+
+.contact { display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; padding: 3.4mm 0; border-bottom: 1px solid var(--line); }
+.contact span { color: var(--ash); margin-right: 2mm; }
+
+/* ---------- body ---------- */
+.body { display: grid; grid-template-columns: 1fr 58mm; gap: 10mm; padding-top: 7mm; flex: 1; }
+section { margin-bottom: 8mm; }
+h2 { margin: 0 0 3mm; display: flex; align-items: center; gap: 2mm; color: var(--ash); font-weight: 400; }
+h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+p { margin: 0; }
+.profile p { font-size: 10pt; line-height: 1.5; }
+.profile p + p { margin-top: 2.4mm; color: #2a2628; font-size: 9.2pt; }
+
+.job { display: grid; grid-template-columns: 22mm 1fr; gap: 3mm; padding: 2.2mm 0; border-top: 1px solid var(--line); }
+.job:first-of-type { border-top: 0; padding-top: 0; }
+.job .when { color: var(--ash); padding-top: 0.6mm; }
+.job b { font-weight: 500; }
+.job em { font-style: normal; color: var(--ash); }
+
+.work { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6mm; }
+.proj { padding: 2.8mm 0 3.2mm; border-top: 1px solid var(--line); break-inside: avoid; }
+.proj__t { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; }
+.proj__name { font-family: "Lingo Italic", sans-serif; font-size: 13pt; line-height: 1.05; }
+.proj__kind { color: var(--pink-ink); margin: 1mm 0 1mm; }
+.proj p { font-size: 8.5pt; line-height: 1.42; color: #2a2628; }
+.work__more { margin-top: 3mm; color: var(--ash); }
+.work__more a { color: var(--ink); border-bottom: 1px solid var(--pink); }
+
+.side h2 { margin-bottom: 2.6mm; }
+.edu b { display: block; font-weight: 500; font-size: 9.2pt; line-height: 1.3; }
+.edu p { color: #2a2628; }
+.honor { margin-top: 2.6mm; padding: 2.4mm 2.8mm; border: 1px solid var(--ink); position: relative; }
+.honor .mono { color: var(--pink-ink); display: block; margin-bottom: 0.8mm; }
+.honor p { font-size: 8.2pt; line-height: 1.4; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { padding: 1.6mm 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 2mm; }
+.list li:first-child { border-top: 1px solid var(--line); }
+.list li .mono { color: var(--ash); }
+
+.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6mm; }
+.tool { border: 1px solid var(--line); padding: 1.6mm 1.8mm 1.4mm; }
+.tool .px { display: block; font-size: 12pt; line-height: 1; }
+.tool .mono { display: block; margin-top: 1mm; font-size: 5.6pt; color: var(--ash); letter-spacing: 0.05em; }
+
+.lv { display: inline-flex; gap: 0.8mm; }
+.lv i { width: 2.2mm; height: 2.2mm; background: var(--pink); display: block; }
+.lv i.off { background: none; box-shadow: inset 0 0 0 0.25mm var(--ash); }
+
+/* ---------- foot ---------- */
+.foot { display: flex; justify-content: space-between; align-items: center; padding-top: 3.4mm; border-top: 1px solid var(--ink); color: var(--ash); }
+.foot b { color: var(--ink); font-weight: 400; }
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div>
+    <div class="head__top mono"><span><span class="dot"></span><b>Holynoa</b> · Portfolio at holynoa.com</span><span>Resume · 2026</span></div>
+    <h1>N<span class="px">o</span>a Ya<span class="px">a</span>k<span class="px">o</span>bovitz</h1>
+    <p class="role">Visual designer working across branding, motion design and UX/UI, with a strong focus on screen-based visuals.</p>
+  </div>
+  <div class="avatar" id="avatar"></div>
+</header>
+
+<div class="contact mono">
+  <a href="mailto:noa@holynoa.com"><span>Email</span>noa@holynoa.com</a>
+  <a href="tel:+972502411880"><span>Phone</span>+972 50 241 1880</a>
+  <a href="https://holynoa.com"><span>Web</span>holynoa.com</a>
+  <a href="https://www.linkedin.com/in/noayaakobovitz"><span>LinkedIn</span>/in/noayaakobovitz</a>
+</div>
+
+<div class="body">
+  <main>
+    <section class="profile">
+      <h2 class="mono">Profile</h2>
+      <p>B.Des. in Visual Communication from HIT, graduated with high honors. I work across branding, motion design, post-production, compositing and UX/UI.</p>
+      <p>My work explores the emotional side of technology: how images, interfaces and digital systems shape memory, mood and perception. Clean, intentional design with subtle imperfections, so it feels both sharp and human.</p>
+    </section>
+
+    <section>
+      <h2 class="mono">Experience</h2>
+      <div class="job"><span class="when mono">2024 – 2025</span><div><b>Motion Designer</b> <em>· Kulaitzuv Magazine</em><p>Motion design for the magazine.</p></div></div>
+      <div class="job"><span class="when mono">2019 – Now</span><div><b>Freelance Designer</b> <em>· Independent</em><p>Branding and product design for independent clients.</p></div></div>
+    </section>
+
+    <section>
+      <h2 class="mono">Selected work</h2>
+      <div class="work">
+        <a class="proj" href="https://holynoa.com/work/anemoia/"><div class="proj__t"><span class="proj__name">Anemoia</span><span class="mono">2025</span></div><div class="proj__kind mono">Video art installation · AI</div><p>Graduation project. Six CRT monitors where AI rebuilds a woman's half-forgotten childhood.</p></a>
+        <a class="proj" href="https://holynoa.com/work/clarity/"><div class="proj__t"><span class="proj__name">Clarity</span><span class="mono">2024</span></div><div class="proj__kind mono">Branding · Packaging</div><p>Identity, packaging, landing page and posters for a conceptual microdosing drink line.</p></a>
+        <a class="proj" href="https://holynoa.com/work/xhibit/"><div class="proj__t"><span class="proj__name">Xhibit</span><span class="mono">2024</span></div><div class="proj__kind mono">UX / UI · Desktop software</div><p>Real-time control software for immersive exhibitions. Made with a classmate.</p></a>
+        <a class="proj" href="https://holynoa.com/work/surface-deep/"><div class="proj__t"><span class="proj__name">Surface Deep</span><span class="mono">2024</span></div><div class="proj__kind mono">Branding · Copywriting</div><p>A fictional skincare brand built on the American Psycho morning-routine monologue.</p></a>
+        <a class="proj" href="https://holynoa.com/work/curious-incident/"><div class="proj__t"><span class="proj__name">The Curious Incident</span><span class="mono">2023</span></div><div class="proj__kind mono">Motion · Title sequence</div><p>Animated title sequence for the novel: typography, compositing, keyframe animation.</p></a>
+        <a class="proj" href="https://holynoa.com/work/unfolded/"><div class="proj__t"><span class="proj__name">Unfolded</span><span class="mono">2023</span></div><div class="proj__kind mono">Editorial · Bookbinding</div><p>A hand-bound A5 artist book around Roger Ballen's photography.</p></a>
+      </div>
+      <p class="work__more mono">Videos and full case studies at <a href="https://holynoa.com">holynoa.com</a></p>
+    </section>
+  </main>
+
+  <aside class="side">
+    <section class="edu">
+      <h2 class="mono">Education</h2>
+      <b>B.Des. Visual Communication</b>
+      <p>HIT Holon Institute of Technology<br>Class of 2025</p>
+      <div class="honor"><span class="mono">★ High honors</span><p>Final project <span class="it">Anemoia</span>, a six-screen video installation.</p></div>
+    </section>
+
+    <section>
+      <h2 class="mono">Disciplines</h2>
+      <ul class="list">
+        <li>Motion graphics</li>
+        <li>Branding &amp; visual language</li>
+        <li>UX / UI design</li>
+        <li>Post-production &amp; compositing</li>
+        <li>Editorial &amp; print</li>
+        <li>Generative art</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="mono">Tools</h2>
+      <div class="tools">
+        <div class="tool"><span class="px">Ae</span><span class="mono">After Effects</span></div>
+        <div class="tool"><span class="px">Pr</span><span class="mono">Premiere Pro</span></div>
+        <div class="tool"><span class="px">Ai</span><span class="mono">Illustrator</span></div>
+        <div class="tool"><span class="px">Ps</span><span class="mono">Photoshop</span></div>
+        <div class="tool"><span class="px">Id</span><span class="mono">InDesign</span></div>
+        <div class="tool"><span class="px">Fi</span><span class="mono">Figma</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="mono">Languages</h2>
+      <ul class="list">
+        <li>Hebrew <span class="lv" aria-label="fluent"><i></i><i></i><i></i></span></li>
+        <li>English <span class="lv" aria-label="fluent"><i></i><i></i><i></i></span></li>
+        <li>Russian <span class="lv" aria-label="basic"><i></i><i class="off"></i><i class="off"></i></span></li>
+      </ul>
+    </section>
+  </aside>
+</div>
+
+<footer class="foot mono">
+  <span><b>Holynoa</b> · Play → distort → design → repeat</span>
+  <span>An interactive version lives at <b>holynoa.com/cv</b></span>
+</footer>
+<script src="../js/avatar.js"></script>
+<script>document.getElementById("avatar").innerHTML = window.avatarSVG("#080708");</script>
+</body>
+</html>

@@ -16,11 +16,20 @@ All text lives in `assets/js/data.js`:
 
 To add an image, drop it into `assets/img/` and add its file name to the right list in `data.js`.
 
+## Resume
+
+There are two versions:
+
+- **Interactive**: `cv/`, rendered by the `cv()` function in `assets/js/next.js`.
+- **PDF**: `assets/Resume-Noa-Yaakobovitz.pdf`, one A4 page built from `assets/cv/resume.html`.
+  After editing that file, rebuild the PDF with `node assets/cv/build-pdf.js` (needs Node and Playwright).
+
 ## Structure
 
 ```
 index.html            home
 about/                info page
+cv/                   interactive resume (the "save file")
 archive/              prints & other stuff
 work/<project>/       one folder per project
 assets/css/next.css   all styles
