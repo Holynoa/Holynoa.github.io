@@ -1120,6 +1120,26 @@
   /* ============================================================
      ABOUT
      ============================================================ */
+  // the resume that opens inside the About page (the PDF has the same content)
+  const CV = [
+    { title: "Experience", rows: [
+      ["2019 → Now", "Freelance Designer", "Branding and product design for independent clients."],
+      ["2024 → 2025", "Motion Designer · Kulaitzuv Magazine", "Animated story transitions, Reels animations and promotional content across the college."],
+    ] },
+    { title: "Education", rows: [
+      ["Class of 2025", "B.Des. Visual Communication · HIT", "Holon Institute of Technology. Graduated with high honors for the final project Anemoia."],
+    ] },
+    { title: "Disciplines", rows: [
+      ["Design", "Branding & visual language · UX / UI · Editorial & print"],
+      ["Moving image", "Motion graphics · Post-production & compositing · Generative art"],
+    ] },
+    { title: "Tools", rows: [
+      ["Adobe", "After Effects · Premiere Pro · Illustrator · Photoshop · InDesign"],
+      ["Other", "Figma"],
+    ] },
+    { title: "Languages", rows: [["Hebrew", "Fluent"], ["English", "Fluent"], ["Russian", "Basic"]] },
+  ];
+
   function about() {
     const main = $("main");
     main.innerHTML = `
@@ -1139,9 +1159,22 @@
               <li><span class="mono">Instagram</span><a href="${S.instagram}" target="_blank" rel="noopener">@holynoa</a></li>
               <li><span class="mono">LinkedIn</span><a href="${S.linkedin}" target="_blank" rel="noopener">noayaakobovitz</a></li>
             </ul>
-            <div class="about__cv">
-              <a class="resume" href="${url("cv/")}" data-cursor="open">Play the CV <span>▸</span></a>
-              <a class="cv-opt mono" href="${asset("Resume-Noa-Yaakobovitz.pdf")}" target="_blank" rel="noopener" data-cursor="pdf">Resume PDF ↓</a>
+            <div class="cvx">
+              <div class="cvx__bar">
+                <button class="cvx__toggle" type="button" aria-expanded="false" aria-controls="cvx-body">
+                  <span class="cvx__t">Resume</span><span class="cvx__state mono"><span class="cvx__open">Expand</span><span class="cvx__close">Collapse</span><i aria-hidden="true"></i></span>
+                </button>
+                <a class="cvx__pdf mono" href="${asset("Resume-Noa-Yaakobovitz.pdf")}" download data-cursor="pdf">PDF ↓</a>
+              </div>
+              <div class="cvx__body" id="cvx-body" inert>
+                <div class="cvx__inner">
+                  ${CV.map((sec) => `
+                    <section class="cvx__sec">
+                      <h3 class="mono">${esc(sec.title)}</h3>
+                      <ul>${sec.rows.map((r) => `<li><span class="mono">${esc(r[0])}</span><span><b>${esc(r[1])}</b>${r[2] ? `<em>${esc(r[2])}</em>` : ""}</span></li>`).join("")}</ul>
+                    </section>`).join("")}
+                </div>
+              </div>
             </div>
           </div>
           <div class="runner" aria-label="A small game: the dog from The Curious Incident runs and jumps. Press space or tap to play.">
@@ -1152,6 +1185,16 @@
       </div>`;
     flicker(glyphs($(".about h1"), { ratio: 0.3, seed: 8 }), 1500);
     runner($(".runner"));
+
+    // the resume: expand / collapse
+    const cvx = $(".cvx"), tog = $(".cvx__toggle", cvx), body = $(".cvx__body", cvx);
+    tog.addEventListener("click", () => {
+      const open = tog.getAttribute("aria-expanded") !== "true";
+      tog.setAttribute("aria-expanded", String(open));
+      cvx.classList.toggle("is-open", open);
+      body.inert = !open;
+      setTimeout(() => hasGSAP && window.ScrollTrigger && ScrollTrigger.refresh(), 650);
+    });
     const pt = $(".about__portrait");
     if (!FINE) pt.addEventListener("click", () => pt.classList.toggle("is-seen"));
     if (hasGSAP && !REDUCED) {
@@ -1362,210 +1405,10 @@
     requestAnimationFrame(frame);
   }
 
-  /* ============================================================
-     CV: the resume as a save file.
-     Everything is readable at once; the game sits on top:
-     XP fills as you read, skills light up the quests that used them,
-     pixel Noa hops when poked, and a few achievements hide in between.
-     ============================================================ */
-  function cv() {
-    const main = $("main");
-    const bySlug = Object.fromEntries(P.map((p) => [p.slug, p]));
-    const SKILLS = [
-      { id: "motion", name: "Motion graphics", q: ["anemoia", "curious-incident"] },
-      { id: "brand", name: "Branding & visual language", q: ["clarity", "surface-deep"] },
-      { id: "ux", name: "UX / UI design", q: ["xhibit", "clarity"] },
-      { id: "post", name: "Post-production & compositing", q: ["anemoia", "curious-incident"] },
-      { id: "print", name: "Editorial & print", q: ["unfolded", "clarity"] },
-      { id: "gen", name: "Generative art", q: ["anemoia"] },
-    ];
-    const TOOLS = [
-      ["Ae", "After Effects", "Motion and compositing"], ["Pr", "Premiere Pro", "Editing and post"],
-      ["Ai", "Illustrator", "Identity and vector"], ["Ps", "Photoshop", "Image and texture"],
-      ["Id", "InDesign", "Editorial and print"], ["Fi", "Figma", "Interfaces"],
-    ];
-    const LANGS = [["Hebrew", 3, "Fluent"], ["English", 3, "Fluent"], ["Russian", 1, "Basic"]];
-    const ACH = [
-      { id: "honors", t: "High honors", d: "Graduated with high honors for Anemoia", on: true },
-      { id: "screens", t: "Six screens, one memory", d: "Wired six CRT monitors into one installation", on: true },
-      { id: "bound", t: "Bound by hand", d: "Hand-bound an A5 artist book", on: true },
-      { id: "poke", t: "Hi there", d: "Poked Noa five times" },
-      { id: "tree", t: "Skill tree", d: "Tried three different skills" },
-      { id: "read", t: "Completionist", d: "Read the save file to the very end" },
-    ];
-    const heart = (on) => `<svg class="cv-heart${on ? "" : " is-off"}" viewBox="0 0 7 6" aria-hidden="true">${
-      [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."].map((r, y) => [...r].map((c, x) => (c === "#" ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : "")).join("")).join("")}</svg>`;
-    const got = new Set(JSON.parse(keep.get("hn-cv-ach") || "[]"));
-
-    main.innerHTML = `
-      <div class="page cv">
-        <div class="cv-hud mono" aria-hidden="true">
-          <span class="cv-hud__lv">LV 01</span>
-          <span class="cv-hud__bar"><i></i></span>
-          <span class="cv-hud__xp">XP 000</span>
-        </div>
-        <a class="cv-save mono" href="${asset("Resume-Noa-Yaakobovitz.pdf")}" download data-cursor="pdf">Save <span>↓ PDF</span></a>
-
-        <section class="cv-hero">
-          <p class="cv-kicker mono"><span class="cv-blink"></span>Player 1 · Save file NOA_Y.SAV · Loaded</p>
-          <h1 class="cv-name">Noa Yaakobovitz</h1>
-          <p class="cv-lead">Visual designer working across branding, motion design and UX/UI, with a strong focus on screen-based visuals.</p>
-          <dl class="cv-stats">
-            <div><dt class="mono">Class</dt><dd>Visual designer</dd></div>
-            <div><dt class="mono">Guild</dt><dd>HIT · B.Des. ’25</dd></div>
-            <div><dt class="mono">Rank</dt><dd>High honors</dd></div>
-            <div><dt class="mono">Quests</dt><dd>${pad(P.length)} completed</dd></div>
-          </dl>
-          <div class="cv-npc">
-            <button class="cv-avatar" type="button" data-cursor="poke" aria-label="Poke Noa">
-              <img src="${img(S.avatar || "portrait-cut.webp")}" alt="${S.avatar ? "Pixel Noa" : "Portrait of Noa"}"${S.avatar ? ' class="is-pixel"' : ""}>
-            </button>
-            <span class="cv-npc__hint mono">${FINE ? "click" : "tap"} me</span>
-          </div>
-        </section>
-
-        <section class="cv-sec" data-lv="2" aria-labelledby="cv-skills">
-          <header class="cv-sec__h"><span class="mono">01</span><h2 id="cv-skills">Skill tree</h2><p class="mono">Pick a skill to see where it was used</p></header>
-          <div class="cv-skills" role="group" aria-label="Skills">
-            ${SKILLS.map((s) => `<button type="button" class="cv-skill" data-skill="${s.id}" aria-pressed="false"><span class="cv-skill__dot"></span>${esc(s.name)}</button>`).join("")}
-          </div>
-          <div class="cv-quests">
-            ${P.map((p, i) => `
-              <a class="cv-quest" href="${url("work/" + p.slug + "/")}" data-slug="${p.slug}">
-                <span class="cv-quest__n mono">Quest ${pad(i + 1)}</span>
-                <span class="cv-quest__obj"><img src="${objSrc(p.obj.src)}" alt="" loading="lazy"></span>
-                <span class="cv-quest__t">${esc(p.short || p.title)}</span>
-                <span class="cv-quest__k mono">${esc(p.kind)} · ${esc(p.year)}</span>
-                <span class="cv-quest__s mono">Complete ✓</span>
-              </a>`).join("")}
-          </div>
-        </section>
-
-        <section class="cv-sec" data-lv="3" aria-labelledby="cv-log">
-          <header class="cv-sec__h"><span class="mono">02</span><h2 id="cv-log">Quest log</h2><p class="mono">Experience and education</p></header>
-          <ol class="cv-log">
-            <li><span class="cv-log__when mono">2019 → Now</span><div><b>Freelance Designer</b><span>Branding and product design for independent clients.</span></div><span class="cv-tag is-live mono">Ongoing</span></li>
-            <li><span class="cv-log__when mono">2024 → 2025</span><div><b>Motion Designer · Kulaitzuv Magazine</b><span>Animated story transitions, Reels animations and promotional content across the college.</span></div><span class="cv-tag mono">Complete</span></li>
-            <li><span class="cv-log__when mono">Class of 2025</span><div><b>B.Des. Visual Communication · HIT</b><span>Holon Institute of Technology. Graduated with high honors for the final project <a href="${url("work/anemoia/")}">Anemoia</a>.</span></div><span class="cv-tag mono">★ Honors</span></li>
-          </ol>
-        </section>
-
-        <section class="cv-sec" data-lv="4" aria-labelledby="cv-inv">
-          <header class="cv-sec__h"><span class="mono">03</span><h2 id="cv-inv">Inventory</h2><p class="mono">Tools and languages</p></header>
-          <div class="cv-inv">
-            <div class="cv-slots">
-              ${TOOLS.map(([k, n, d]) => `<button type="button" class="cv-slot" aria-label="${esc(n)}, ${esc(d)}"><span class="cv-slot__k">${k}</span><span class="cv-slot__n mono">${esc(n)}</span><span class="cv-slot__d mono">${esc(d)}</span></button>`).join("")}
-            </div>
-            <ul class="cv-langs">
-              ${LANGS.map(([n, lv, w]) => `<li><span>${n}</span><span class="cv-langs__h" aria-label="${w}">${[0, 1, 2].map((i) => heart(i < lv)).join("")}</span><span class="mono">${w}</span></li>`).join("")}
-            </ul>
-          </div>
-        </section>
-
-        <section class="cv-sec" data-lv="5" aria-labelledby="cv-ach">
-          <header class="cv-sec__h"><span class="mono">04</span><h2 id="cv-ach">Achievements</h2><p class="mono"><span class="cv-ach__count">0</span> / ${ACH.length} unlocked</p></header>
-          <ul class="cv-ach">
-            ${ACH.map((a) => `<li class="cv-badge" data-ach="${a.id}"><span class="cv-badge__ic" aria-hidden="true"></span><b>${esc(a.t)}</b><span class="cv-badge__d">${esc(a.d)}</span></li>`).join("")}
-          </ul>
-        </section>
-
-        <section class="cv-end" data-lv="6">
-          <p class="cv-end__big">Save your progress?</p>
-          <div class="cv-end__opts">
-            <a class="resume" href="${asset("Resume-Noa-Yaakobovitz.pdf")}" download data-cursor="pdf">Save as PDF <span>↓</span></a>
-            <a class="cv-opt mono" href="mailto:${esc(S.cvEmail || S.email)}">Say hi · ${esc(S.cvEmail || S.email)}</a>
-            <a class="cv-opt mono" href="${url("")}#index">Continue to the work →</a>
-          </div>
-        </section>
-        <div class="cv-toast mono" role="status" aria-live="polite"></div>
-      </div>`;
-
-    const root = $(".cv");
-    flicker(glyphs($(".cv-name"), { ratio: 0.3, seed: 12 }), 1500);
-    $$(".cv-sec__h h2, .cv-end__big").forEach((el, i) => flicker(glyphs(el, { ratio: 0.3, seed: 20 + i }), 1900));
-
-    /* ---------- achievements ---------- */
-    const toast = $(".cv-toast", root);
-    let toastT = 0;
-    const paintAch = () => {
-      let n = 0;
-      ACH.forEach((a) => { const on = a.on || got.has(a.id); n += on; $(`[data-ach="${a.id}"]`, root).classList.toggle("is-on", on); });
-      $(".cv-ach__count", root).textContent = n;
-      if (n === ACH.length) root.classList.add("is-complete");
-    };
-    const unlock = (id) => {
-      if (got.has(id)) return;
-      got.add(id); keep.set("hn-cv-ach", JSON.stringify([...got]));
-      const a = ACH.find((x) => x.id === id);
-      toast.innerHTML = `<span>★ Achievement unlocked</span><b>${esc(a.t)}</b>`;
-      toast.classList.add("is-on");
-      clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove("is-on"), 3200);
-      paintAch(); xp();
-    };
-    paintAch();
-
-    /* ---------- Noa hops when poked ---------- */
-    const av = $(".cv-avatar", root);
-    let pokes = 0;
-    av.addEventListener("click", () => {
-      av.classList.remove("is-hop"); void av.offsetWidth; av.classList.add("is-hop");
-      if (++pokes >= 5) unlock("poke");
-    });
-
-    /* ---------- skill tree ---------- */
-    const tried = new Set();
-    $$(".cv-skill", root).forEach((b) => b.addEventListener("click", () => {
-      const on = b.getAttribute("aria-pressed") !== "true";
-      $$(".cv-skill", root).forEach((x) => x.setAttribute("aria-pressed", "false"));
-      b.setAttribute("aria-pressed", String(on));
-      const s = SKILLS.find((x) => x.id === b.dataset.skill);
-      root.classList.toggle("is-filtering", on);
-      $$(".cv-quest", root).forEach((q) => q.classList.toggle("is-hit", on && s.q.includes(q.dataset.slug)));
-      if (on) { tried.add(s.id); if (tried.size >= 3) unlock("tree"); }
-    }));
-
-    /* ---------- XP: reading fills the bar, every section is a level ---------- */
-    const bar = $(".cv-hud__bar i", root), lvEl = $(".cv-hud__lv", root), xpEl = $(".cv-hud__xp", root);
-    let lv = 1;
-    function xp() {
-      const max = DE.scrollHeight - innerHeight;
-      const read = max > 0 ? clamp(scrollY / max, 0, 1) : 1;
-      const bonus = ACH.filter((a) => !a.on && got.has(a.id)).length * 50;
-      const val = Math.round(read * 850) + bonus;
-      bar.style.transform = `scaleX(${read})`;
-      xpEl.textContent = "XP " + String(val).padStart(3, "0");
-      let now = 1;
-      $$("[data-lv]", root).forEach((s) => { if (s.getBoundingClientRect().top < innerHeight * 0.6) now = Math.max(now, +s.dataset.lv); });
-      if (now !== lv) {
-        if (now > lv) { lvEl.classList.remove("is-up"); void lvEl.offsetWidth; lvEl.classList.add("is-up"); }
-        lv = now; lvEl.textContent = "LV " + pad(lv);
-      }
-      if (read > 0.985) unlock("read");
-      root.classList.toggle("is-end", $(".cv-end", root).getBoundingClientRect().top < innerHeight * 0.75);
-    }
-    addEventListener("scroll", xp, { passive: true });
-    addEventListener("resize", xp);
-    xp();
-
-    /* number keys jump between sections, like a level select */
-    addEventListener("keydown", (e) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || /input|textarea/i.test(e.target.tagName)) return;
-      const n = +e.key;
-      const secs = $$(".cv-sec, .cv-end", root);
-      if (n >= 1 && n <= secs.length) secs[n - 1].scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
-    });
-
-    if (hasGSAP && !REDUCED) {
-      gsap.from(".cv-hero > *", { y: 24, opacity: 0, duration: 0.9, stagger: 0.07, ease: "power3.out", delay: 0.15 });
-      $$(".cv-quest, .cv-log li, .cv-slot, .cv-langs li, .cv-badge").forEach((el) =>
-        gsap.from(el, { y: 20, opacity: 0, duration: 0.7, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 95%" } }));
-    }
-  }
-
   /* ---------- boot ---------- */
   chrome();
   boot();
-  ({ home, project, archive, about, cv })[PAGE]?.();
+  ({ home, project, archive, about })[PAGE]?.();
   footer();
   tabTitle();
   easterEggs();
