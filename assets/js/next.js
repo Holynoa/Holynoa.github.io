@@ -1161,6 +1161,7 @@
             </ul>
             <div class="cvx">
               <div class="cvx__bar">
+                ${window.avatarSVG ? `<span class="cvx__noa" aria-hidden="true">${window.avatarSVG({ grid: true })}</span>` : ""}
                 <button class="cvx__toggle" type="button" aria-expanded="false" aria-controls="cvx-body">
                   <span class="cvx__t">Resume</span><span class="cvx__state mono"><span class="cvx__open">Expand</span><span class="cvx__close">Collapse</span><i aria-hidden="true"></i></span>
                 </button>

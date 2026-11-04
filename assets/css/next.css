@@ -458,6 +458,10 @@ body.has-cursor .runner__cv { cursor: none; }
 /* the resume, folded into the About page */
 .cvx { margin-top: 48px; border-top: 1px solid var(--bone); border-bottom: 1px solid var(--line); }
 .cvx__bar { display: flex; align-items: center; gap: 20px; }
+.cvx__noa { flex: none; width: 72px; padding: 10px 0; }
+.cvx__noa svg { display: block; width: 100%; height: auto; outline: 1px solid var(--line); }
+.cvx__bar:hover .cvx__noa svg { animation: cvx-hop 0.4s steps(3); }
+@keyframes cvx-hop { 50% { transform: translateY(-5px); } }
 .cvx__toggle { flex: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 18px 0; text-align: left; }
 .cvx__t { font-family: var(--italic); font-size: clamp(28px, 2.6vw, 44px); line-height: 1; transition: color 0.2s; }
 .cvx__state { display: inline-flex; align-items: center; gap: 10px; color: var(--ash); transition: color 0.2s; }
@@ -484,9 +488,12 @@ body.has-cursor .runner__cv { cursor: none; }
 .cvx__sec li:last-child { border-bottom: 0; }
 @media (max-width: 760px) {
   .cvx__sec li { grid-template-columns: 1fr; gap: 4px; }
+  .cvx__noa { width: 56px; }
+  .cvx__bar { gap: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cvx__body, .cvx__sec { transition: none; }
+  .cvx__bar:hover .cvx__noa svg { animation: none; }
 }
 
 /* ============================================================

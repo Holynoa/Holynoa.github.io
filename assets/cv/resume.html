@@ -38,8 +38,10 @@ a { color: inherit; text-decoration: none; }
 .it { font-family: "Lingo Italic", "Geist", sans-serif; font-weight: 400; }
 
 /* ---------- head ---------- */
-.head { padding-bottom: 6mm; border-bottom: 1px solid var(--ink); }
+.head { display: grid; grid-template-columns: 1fr 20mm; gap: 8mm; align-items: end; padding-bottom: 6mm; border-bottom: 1px solid var(--ink); }
 .head__top { display: flex; justify-content: space-between; margin-bottom: 5mm; color: var(--ash); }
+.noa { width: 20mm; margin-bottom: 1mm; }
+.noa svg { display: block; width: 100%; height: auto; }
 .head__top b { color: var(--ink); font-weight: 400; }
 .dot { display: inline-block; width: 1.6mm; height: 1.6mm; background: var(--pink); margin-right: 1.6mm; vertical-align: 0.1mm; }
 h1 { margin: 0; font-family: "Lingo Italic", sans-serif; font-weight: 400; font-size: 39pt; line-height: 0.92; letter-spacing: -0.01em; }
@@ -107,6 +109,7 @@ p { margin: 0; }
     <h1>N<span class="px">o</span>a Ya<span class="px">a</span>k<span class="px">o</span>bovitz</h1>
     <p class="role">Visual designer working across branding, motion design and UX/UI, with a strong focus on screen-based visuals.</p>
   </div>
+  <div class="noa" id="noa"></div>
 </header>
 
 <div class="contact mono">
@@ -191,5 +194,7 @@ p { margin: 0; }
   <span><b>Holynoa</b> · Play → distort → design → repeat</span>
   <span>Work, motion and case studies at <b>holynoa.com</b></span>
 </footer>
+<script src="../js/avatar.js"></script>
+<script>document.getElementById("noa").innerHTML = window.avatarSVG({ pad: 0 });</script>
 </body>
 </html>
