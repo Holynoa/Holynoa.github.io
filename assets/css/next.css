@@ -547,24 +547,13 @@ body.has-cursor .runner__cv { cursor: none; }
 .cv-stats dt { color: var(--ash); }
 .cv-stats dd { margin: 6px 0 0; }
 .cv-npc { grid-column: 9 / 13; grid-row: 2 / 6; align-self: end; position: relative; display: flex; flex-direction: column; align-items: center; }
-.cv-avatar { width: 100%; position: relative; }
-.cv-avatar img {
-  width: 100%; height: auto;
-  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
-  filter: blur(12px); transform: scale(1.02);
-  transition: filter 0.9s var(--ease-out), transform 1.2s var(--ease-out);
-}
-.cv-avatar:hover img, .cv-avatar.is-seen img { filter: blur(0); transform: scale(1); }
-html[data-lights="on"] .cv-avatar img { filter: brightness(0) blur(12px); }
-html[data-lights="on"] .cv-avatar:hover img, html[data-lights="on"] .cv-avatar.is-seen img { filter: brightness(0); }
-.cv-say {
-  order: -1; width: min(100%, 340px); margin-bottom: 18px; padding: 14px 16px 12px; position: relative; cursor: pointer;
-  border: 1px solid var(--bone); background: var(--void); min-height: 96px;
-}
-.cv-say::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 12px; background: var(--void); border-right: 1px solid var(--bone); border-bottom: 1px solid var(--bone); transform: translateX(-50%) rotate(45deg); }
-.cv-say__txt { margin: 0 0 8px; font-size: 15px; line-height: 1.45; }
-.cv-say__next { color: var(--pink); animation: cv-blink 1.1s steps(1) infinite; }
+.cv-avatar { width: min(100%, 340px); position: relative; }
+.cv-avatar img { display: block; width: 100%; height: auto; }
+.cv-avatar img.is-pixel { image-rendering: pixelated; }
+.cv-avatar.is-hop { animation: cv-hop 0.42s steps(4); }
+@keyframes cv-idle { 50% { transform: translateY(-3px); } }
+@keyframes cv-hop { 50% { transform: translateY(-22px); } }
+.cv-npc__hint { margin-top: 14px; color: var(--ash); }
 
 /* sections */
 .cv-sec { padding: 12vh 0 4vh; border-top: 1px solid var(--line); }
@@ -684,5 +673,5 @@ html[data-lights="on"] .cv-avatar:hover img, html[data-lights="on"] .cv-avatar.i
   .cv-toast { bottom: 66px; width: calc(100% - 2 * var(--gutter)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cv-blink, .cv-say__next, .cv-hud__lv.is-up { animation: none; }
+  .cv-avatar, .cv-avatar.is-hop, .cv-blink, .cv-hud__lv.is-up { animation: none; }
 }

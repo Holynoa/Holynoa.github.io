@@ -10,6 +10,7 @@ window.SITE = {
   name: "Noa Yaakobovitz",
   email: "noa@holynoa.com",
   cvEmail: "noaya10@gmail.com",   // the email printed on the resume (PDF and /cv/)
+  avatar: "",                     // a pixel avatar for /cv/ (file in assets/img/); empty shows the portrait
   phone: "+972 50 241 1880",
   phoneHref: "+972502411880",
   instagram: "https://www.instagram.com/holynoa/",

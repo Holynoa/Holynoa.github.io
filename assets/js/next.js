@@ -1366,7 +1366,7 @@
      CV: the resume as a save file.
      Everything is readable at once; the game sits on top:
      XP fills as you read, skills light up the quests that used them,
-     Noa talks when clicked, and a few achievements hide in between.
+     pixel Noa hops when poked, and a few achievements hide in between.
      ============================================================ */
   function cv() {
     const main = $("main");
@@ -1385,18 +1385,11 @@
       ["Id", "InDesign", "Editorial and print"], ["Fi", "Figma", "Interfaces"],
     ];
     const LANGS = [["Hebrew", 3, "Fluent"], ["English", 3, "Fluent"], ["Russian", 1, "Basic"]];
-    const LINES = [
-      "Hi, I'm Noa. Visual designer, B.Des. in Visual Communication from HIT.",
-      "I work across branding, motion, post-production, compositing and UX/UI.",
-      "My thing is the emotional side of technology: how screens shape memory, mood and perception.",
-      "Not just how things look, but how they move and feel.",
-      "Want the paper version? Press Save, top right of your screen. Or just say hi.",
-    ];
     const ACH = [
       { id: "honors", t: "High honors", d: "Graduated with high honors for Anemoia", on: true },
       { id: "screens", t: "Six screens, one memory", d: "Wired six CRT monitors into one installation", on: true },
       { id: "bound", t: "Bound by hand", d: "Hand-bound an A5 artist book", on: true },
-      { id: "talk", t: "Small talk", d: "Listened to everything Noa had to say" },
+      { id: "poke", t: "Hi there", d: "Poked Noa five times" },
       { id: "tree", t: "Skill tree", d: "Tried three different skills" },
       { id: "read", t: "Completionist", d: "Read the save file to the very end" },
     ];
@@ -1424,10 +1417,10 @@
             <div><dt class="mono">Quests</dt><dd>${pad(P.length)} completed</dd></div>
           </dl>
           <div class="cv-npc">
-            <button class="cv-avatar" type="button" data-cursor="talk" aria-label="Talk to Noa">
-              <img src="${img("portrait-cut.webp")}" alt="Portrait of Noa">
+            <button class="cv-avatar" type="button" data-cursor="poke" aria-label="Poke Noa">
+              <img src="${img(S.avatar || "portrait-cut.webp")}" alt="${S.avatar ? "Pixel Noa" : "Portrait of Noa"}"${S.avatar ? ' class="is-pixel"' : ""}>
             </button>
-            <div class="cv-say" aria-live="polite"><p class="cv-say__txt"></p><span class="cv-say__next mono">${FINE ? "click Noa" : "tap Noa"} ▸</span></div>
+            <span class="cv-npc__hint mono">${FINE ? "click" : "tap"} me</span>
           </div>
         </section>
 
@@ -1511,27 +1504,13 @@
     };
     paintAch();
 
-    /* ---------- the NPC ---------- */
-    const say = $(".cv-say__txt", root), av = $(".cv-avatar", root);
-    let line = -1, typing = 0, heard = new Set();
-    const talk = () => {
-      line = (line + 1) % LINES.length; heard.add(line);
-      const t = LINES[line];
-      clearInterval(typing);
-      if (line > 0) av.classList.add("is-seen");   // talking to her brings the portrait into focus
-      if (REDUCED) { say.textContent = t; }
-      else {
-        let i = 0; say.textContent = "";
-        typing = setInterval(() => {
-          say.textContent = t.slice(0, ++i);
-          if (i >= t.length) clearInterval(typing);
-        }, 18);
-      }
-      if (heard.size === LINES.length) unlock("talk");
-    };
-    av.addEventListener("click", talk);
-    $(".cv-say", root).addEventListener("click", talk);
-    talk();
+    /* ---------- Noa hops when poked ---------- */
+    const av = $(".cv-avatar", root);
+    let pokes = 0;
+    av.addEventListener("click", () => {
+      av.classList.remove("is-hop"); void av.offsetWidth; av.classList.add("is-hop");
+      if (++pokes >= 5) unlock("poke");
+    });
 
     /* ---------- skill tree ---------- */
     const tried = new Set();
