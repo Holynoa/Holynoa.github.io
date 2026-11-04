@@ -38,16 +38,13 @@ a { color: inherit; text-decoration: none; }
 .it { font-family: "Lingo Italic", "Geist", sans-serif; font-weight: 400; }
 
 /* ---------- head ---------- */
-.head { display: grid; grid-template-columns: 1fr 30mm; gap: 8mm; align-items: end; padding-bottom: 6mm; border-bottom: 1px solid var(--ink); }
+.head { padding-bottom: 6mm; border-bottom: 1px solid var(--ink); }
 .head__top { display: flex; justify-content: space-between; margin-bottom: 5mm; color: var(--ash); }
 .head__top b { color: var(--ink); font-weight: 400; }
 .dot { display: inline-block; width: 1.6mm; height: 1.6mm; background: var(--pink); margin-right: 1.6mm; vertical-align: 0.1mm; }
 h1 { margin: 0; font-family: "Lingo Italic", sans-serif; font-weight: 400; font-size: 39pt; line-height: 0.92; letter-spacing: -0.01em; }
 h1 .px { font-size: 0.96em; }
 .role { margin: 3.2mm 0 0; font-size: 11.5pt; line-height: 1.35; font-weight: 300; letter-spacing: -0.01em; max-width: 120mm; }
-.avatar { width: 30mm; margin-bottom: -6mm; }
-.avatar svg { display: block; width: 100%; height: auto; }
-.px-avatar__blink, .px-avatar__talk { display: none; }
 
 .contact { display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; padding: 3.4mm 0; border-bottom: 1px solid var(--line); }
 .contact span { color: var(--ash); margin-right: 2mm; }
@@ -110,11 +107,10 @@ p { margin: 0; }
     <h1>N<span class="px">o</span>a Ya<span class="px">a</span>k<span class="px">o</span>bovitz</h1>
     <p class="role">Visual designer working across branding, motion design and UX/UI, with a strong focus on screen-based visuals.</p>
   </div>
-  <div class="avatar" id="avatar"></div>
 </header>
 
 <div class="contact mono">
-  <a href="mailto:noa@holynoa.com"><span>Email</span>noa@holynoa.com</a>
+  <a href="mailto:noaya10@gmail.com"><span>Email</span>noaya10@gmail.com</a>
   <a href="tel:+972502411880"><span>Phone</span>+972 50 241 1880</a>
   <a href="https://holynoa.com"><span>Web</span>holynoa.com</a>
   <a href="https://www.linkedin.com/in/noayaakobovitz"><span>LinkedIn</span>/in/noayaakobovitz</a>
@@ -130,7 +126,7 @@ p { margin: 0; }
 
     <section>
       <h2 class="mono">Experience</h2>
-      <div class="job"><span class="when mono">2024 – 2025</span><div><b>Motion Designer</b> <em>· Kulaitzuv Magazine</em><p>Motion design for the magazine.</p></div></div>
+      <div class="job"><span class="when mono">2024 – 2025</span><div><b>Motion Designer</b> <em>· Kulaitzuv Magazine</em><p>Animated story transitions, Reels animations and promotional content across the college.</p></div></div>
       <div class="job"><span class="when mono">2019 – Now</span><div><b>Freelance Designer</b> <em>· Independent</em><p>Branding and product design for independent clients.</p></div></div>
     </section>
 
@@ -195,7 +191,5 @@ p { margin: 0; }
   <span><b>Holynoa</b> · Play → distort → design → repeat</span>
   <span>An interactive version lives at <b>holynoa.com/cv</b></span>
 </footer>
-<script src="../js/avatar.js"></script>
-<script>document.getElementById("avatar").innerHTML = window.avatarSVG("#080708");</script>
 </body>
 </html>

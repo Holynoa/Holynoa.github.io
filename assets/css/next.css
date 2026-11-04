@@ -547,13 +547,17 @@ body.has-cursor .runner__cv { cursor: none; }
 .cv-stats dt { color: var(--ash); }
 .cv-stats dd { margin: 6px 0 0; }
 .cv-npc { grid-column: 9 / 13; grid-row: 2 / 6; align-self: end; position: relative; display: flex; flex-direction: column; align-items: center; }
-.cv-avatar { width: min(100%, 300px); position: relative; animation: cv-idle 2.4s steps(2) infinite; }
-.cv-avatar .px-avatar { display: block; width: 100%; height: auto; }
-.px-avatar__blink, .px-avatar__talk { display: none; }
-.cv-avatar.is-blink .px-avatar__blink, .cv-avatar.is-mouth .px-avatar__talk { display: inline; }
-.cv-avatar.is-talk { animation: cv-talk 0.32s steps(2) 2, cv-idle 2.4s steps(2) 0.64s infinite; }
-@keyframes cv-idle { 50% { transform: translateY(-4px); } }
-@keyframes cv-talk { 50% { transform: translateY(-9px); } }
+.cv-avatar { width: 100%; position: relative; }
+.cv-avatar img {
+  width: 100%; height: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+  filter: blur(12px); transform: scale(1.02);
+  transition: filter 0.9s var(--ease-out), transform 1.2s var(--ease-out);
+}
+.cv-avatar:hover img, .cv-avatar.is-seen img { filter: blur(0); transform: scale(1); }
+html[data-lights="on"] .cv-avatar img { filter: brightness(0) blur(12px); }
+html[data-lights="on"] .cv-avatar:hover img, html[data-lights="on"] .cv-avatar.is-seen img { filter: brightness(0); }
 .cv-say {
   order: -1; width: min(100%, 340px); margin-bottom: 18px; padding: 14px 16px 12px; position: relative; cursor: pointer;
   border: 1px solid var(--bone); background: var(--void); min-height: 96px;
@@ -661,7 +665,6 @@ body.has-cursor .runner__cv { cursor: none; }
   .cv { padding-top: 96px; }
   .cv-hero { display: flex; flex-direction: column; align-items: stretch; min-height: 0; padding-bottom: 6vh; }
   .cv-npc { order: 2; margin-top: 6vh; }
-  .cv-avatar { width: 62%; }
   .cv-stats { grid-template-columns: 1fr 1fr; order: 3; }
   .cv-sec__h { grid-template-columns: 1fr; gap: 8px; }
   .cv-sec__h p { text-align: left; }
@@ -681,5 +684,5 @@ body.has-cursor .runner__cv { cursor: none; }
   .cv-toast { bottom: 66px; width: calc(100% - 2 * var(--gutter)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cv-avatar, .cv-avatar.is-talk, .cv-blink, .cv-say__next, .cv-hud__lv.is-up { animation: none; }
+  .cv-blink, .cv-say__next, .cv-hud__lv.is-up { animation: none; }
 }

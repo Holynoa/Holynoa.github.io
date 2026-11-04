@@ -1425,7 +1425,7 @@
           </dl>
           <div class="cv-npc">
             <button class="cv-avatar" type="button" data-cursor="talk" aria-label="Talk to Noa">
-              ${window.avatarSVG ? window.avatarSVG("var(--bone)") : ""}
+              <img src="${img("portrait-cut.webp")}" alt="Portrait of Noa">
             </button>
             <div class="cv-say" aria-live="polite"><p class="cv-say__txt"></p><span class="cv-say__next mono">${FINE ? "click Noa" : "tap Noa"} ▸</span></div>
           </div>
@@ -1452,7 +1452,7 @@
           <header class="cv-sec__h"><span class="mono">02</span><h2 id="cv-log">Quest log</h2><p class="mono">Experience and education</p></header>
           <ol class="cv-log">
             <li><span class="cv-log__when mono">2019 → Now</span><div><b>Freelance Designer</b><span>Branding and product design for independent clients.</span></div><span class="cv-tag is-live mono">Ongoing</span></li>
-            <li><span class="cv-log__when mono">2024 → 2025</span><div><b>Motion Designer · Kulaitzuv Magazine</b><span>Motion design for the magazine.</span></div><span class="cv-tag mono">Complete</span></li>
+            <li><span class="cv-log__when mono">2024 → 2025</span><div><b>Motion Designer · Kulaitzuv Magazine</b><span>Animated story transitions, Reels animations and promotional content across the college.</span></div><span class="cv-tag mono">Complete</span></li>
             <li><span class="cv-log__when mono">Class of 2025</span><div><b>B.Des. Visual Communication · HIT</b><span>Holon Institute of Technology. Graduated with high honors for the final project <a href="${url("work/anemoia/")}">Anemoia</a>.</span></div><span class="cv-tag mono">★ Honors</span></li>
           </ol>
         </section>
@@ -1480,7 +1480,7 @@
           <p class="cv-end__big">Save your progress?</p>
           <div class="cv-end__opts">
             <a class="resume" href="${asset("Resume-Noa-Yaakobovitz.pdf")}" download data-cursor="pdf">Save as PDF <span>↓</span></a>
-            <a class="cv-opt mono" href="mailto:${esc(S.email)}">Say hi · ${esc(S.email)}</a>
+            <a class="cv-opt mono" href="mailto:${esc(S.cvEmail || S.email)}">Say hi · ${esc(S.cvEmail || S.email)}</a>
             <a class="cv-opt mono" href="${url("")}#index">Continue to the work →</a>
           </div>
         </section>
@@ -1518,23 +1518,18 @@
       line = (line + 1) % LINES.length; heard.add(line);
       const t = LINES[line];
       clearInterval(typing);
-      av.classList.remove("is-talk"); void av.offsetWidth; av.classList.add("is-talk");
+      if (line > 0) av.classList.add("is-seen");   // talking to her brings the portrait into focus
       if (REDUCED) { say.textContent = t; }
       else {
         let i = 0; say.textContent = "";
         typing = setInterval(() => {
           say.textContent = t.slice(0, ++i);
-          av.classList.toggle("is-mouth", i % 6 < 3 && i < t.length);   // the mouth moves while the words appear
           if (i >= t.length) clearInterval(typing);
         }, 18);
       }
       if (heard.size === LINES.length) unlock("talk");
     };
     av.addEventListener("click", talk);
-    if (!REDUCED) {
-      const blink = () => { av.classList.add("is-blink"); setTimeout(() => av.classList.remove("is-blink"), 140); setTimeout(blink, 2200 + Math.random() * 3200); };
-      setTimeout(blink, 1800);
-    }
     $(".cv-say", root).addEventListener("click", talk);
     talk();
 
