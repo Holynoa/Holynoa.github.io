@@ -1121,7 +1121,16 @@
      ABOUT
      ============================================================ */
   // the resume that opens inside the About page (the PDF has the same content)
+  // the timeline at the top of the resume. Projects join their year automatically (from data.js)
+  const TIMELINE = [
+    { y: "2019", at: 2019, events: ["Starts freelancing: branding and product design"] },
+    { y: "2023", at: 2023, events: [] },
+    { y: "2024", at: 2024, events: ["Joins Kulaitzuv Magazine as a motion designer"] },
+    { y: "2025", at: 2025, events: ["Graduates from HIT, B.Des. Visual Communication, with high honors", "Wraps up at Kulaitzuv Magazine"] },
+    { y: "Now", at: 2026, events: ["Freelance visual designer"] },
+  ];
   const CV = [
+    { title: "Timeline", timeline: true },
     { title: "Experience", rows: [
       ["2019 → Now", "Freelance Designer", "Branding and product design for independent clients."],
       ["2024 → 2025", "Motion Designer · Kulaitzuv Magazine", "Animated story transitions, Reels animations and promotional content across the college."],
@@ -1181,6 +1190,12 @@
                   ${CV.map((sec) => `
                     <section class="cvx__sec">
                       <h3 class="mono">${esc(sec.title)}</h3>
+                      ${sec.timeline ? `
+                        <div class="cvx__tl" role="group" aria-label="Timeline">
+                          <div class="cvx__tl-line"><i></i></div>
+                          ${TIMELINE.map((t, i) => `<button type="button" class="cvx__tl-dot" data-i="${i}" style="--x:${(t.at - TIMELINE[0].at) / (TIMELINE[TIMELINE.length - 1].at - TIMELINE[0].at)}" aria-pressed="false"><span class="mono">${t.y}</span></button>`).join("")}
+                        </div>
+                        <div class="cvx__tl-panel" aria-live="polite"></div>` : ""}
                       ${sec.rows ? `<ul>${sec.rows.map((r) => `<li><span class="mono">${esc(r[0])}</span><span><b>${esc(r[1])}</b>${r[2] ? `<em>${esc(r[2])}</em>` : ""}</span></li>`).join("")}</ul>` : ""}
                       ${sec.skills ? `
                         <div class="cvx__skills">${sec.skills.map(([n, q]) => `<button type="button" class="cvx__skill" data-q="${q.join(" ")}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>
@@ -1210,6 +1225,38 @@
       body.inert = !open;
       setTimeout(() => hasGSAP && window.ScrollTrigger && ScrollTrigger.refresh(), 650);
     });
+
+    // timeline: pick a year (hover, tap or arrow keys) to see what happened then
+    const tl = $(".cvx__tl", cvx), panel = $(".cvx__tl-panel", cvx), dots = $$(".cvx__tl-dot", cvx);
+    let cur = -1;
+    const pick = (i) => {
+      if (i === cur) return;
+      cur = i;
+      const t = TIMELINE[i];
+      const work = P.filter((p) => String(p.year) === t.y);
+      dots.forEach((d, k) => { d.setAttribute("aria-pressed", String(k === i)); d.classList.toggle("is-past", k < i); });
+      tl.style.setProperty("--fill", dots[i].style.getPropertyValue("--x"));
+      panel.innerHTML = `
+        <div class="cvx__tl-in">
+          <p class="cvx__tl-y">${esc(t.y)}</p>
+          <div class="cvx__tl-body">
+            ${t.events.length ? `<ul>${t.events.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+            ${work.length ? `<div class="cvx__tl-work">${work.map((p) => `<a class="cvx__obj" href="${url("work/" + p.slug + "/")}"><span class="cvx__obj-img"><img src="${objSrc(p.obj.src)}" alt=""></span><span class="mono">${esc(p.short || p.title)}</span></a>`).join("")}</div>` : ""}
+          </div>
+        </div>`;
+    };
+    dots.forEach((d, i) => {
+      if (FINE) d.addEventListener("mouseenter", () => pick(i));
+      d.addEventListener("click", () => pick(i));
+      d.addEventListener("keydown", (e) => {
+        const k = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!k) return;
+        e.preventDefault();
+        const n = clamp(cur + k, 0, dots.length - 1);
+        pick(n); dots[n].focus();
+      });
+    });
+    pick(TIMELINE.length - 2);   // open on graduation year
 
     // disciplines light up the projects that used them (hover on desktop, tap to pin)
     const work = $(".cvx__work", cvx);
