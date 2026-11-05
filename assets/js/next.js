@@ -344,6 +344,10 @@
       o.sx += px * 0.12; o.sy += py * 0.12;
       o.sx *= 0.985; o.sy *= 0.985;     // drift back home when there is room
       const ow = o.im.offsetWidth / 2, oh = o.im.offsetHeight / 2;
+      // a leash: pushes may nudge an object off its ring, never carry it away.
+      // Without this, on short wide screens they jammed against one edge and stayed there.
+      const lim = (ow + oh) * 0.6;
+      o.sx = clamp(o.sx, -lim, lim); o.sy = clamp(o.sy, -lim, lim);
       o.sx = clamp(o.cx + o.sx, ow + 10, W - ow - 10) - o.cx;
       o.sy = clamp(o.cy + o.sy, oh + top, H - oh - 10) - o.cy;
       // never let a push slide anything over the name or the intro
