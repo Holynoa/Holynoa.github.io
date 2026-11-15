@@ -1049,13 +1049,15 @@
         <section class="a-head">
           <div class="a-head__obj"></div>
           <h1>Prints &amp; other stuff</h1>
-          <p>Posters, prints and things made in between, from over the years.<span class="mono">${pad(A.length)} pieces · click to look closer</span></p>
+          <p>Posters, prints, motion loops and things made in between, from over the years.<span class="mono">${pad(A.length)} pieces · click to look closer</span></p>
         </section>
         <section class="a-grid">
           ${A.map((a, i) => `
             <button class="a-item" type="button" data-i="${i}" data-cursor="look">
               <figure style="margin:0">
-                <div class="frame"><img src="${img(a.thumb || a.src)}" alt="${esc(a.title)}" loading="lazy"${a.pos ? ` style="object-position:${a.pos}"` : ""}></div>
+                <div class="frame">${a.video
+                  ? `<video src="${ROOT}assets/${a.preview || a.video}" poster="${img(a.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(a.title)}"></video>`
+                  : `<img src="${img(a.thumb || a.src)}" alt="${esc(a.title)}" loading="lazy"${a.pos ? ` style="object-position:${a.pos}"` : ""}>`}</div>
                 <figcaption><b>${esc(a.title)}</b><span class="mono">${esc(a.kind)}</span></figcaption>
               </figure>
             </button>`).join("")}
@@ -1065,6 +1067,7 @@
         <button class="lightbox__close mono" type="button">Close ✕</button>
         <button class="lightbox__nav lightbox__nav--prev mono" type="button" aria-label="Previous piece">← Prev</button>
         <img alt="">
+        <video muted loop playsinline hidden></video>
         <button class="lightbox__nav lightbox__nav--next mono" type="button" aria-label="Next piece">Next →</button>
         <span class="lightbox__cap mono"></span>
         <span class="lightbox__count mono" aria-live="polite"></span>
@@ -1074,27 +1077,34 @@
     flicker(glyphs($(".a-head h1"), { ratio: 0.3, seed: 4 }), 1500);
     $$(".a-item .frame").forEach(reveal);
 
-    const lb = $(".lightbox"), lbImg = $("img", lb), cap = $(".lightbox__cap", lb), count = $(".lightbox__count", lb);
+    const lb = $(".lightbox"), lbImg = $("img", lb), lbVid = $("video", lb), cap = $(".lightbox__cap", lb), count = $(".lightbox__count", lb);
     let opener = null, cur = 0;
     const isOpen = () => lb.classList.contains("is-open");
-    const close = () => { lb.classList.remove("is-open"); opener && opener.focus(); };
+    const close = () => { lb.classList.remove("is-open"); lbVid.pause(); opener && opener.focus(); };
     // show piece i; the neighbours load quietly in the background so flipping feels instant
     const show = (i, dir = 0) => {
       cur = (i + A.length) % A.length;
       const a = A[cur];
       const swap = () => {
-        lbImg.src = img(a.src); lbImg.alt = a.title;
+        if (a.video) {
+          lbImg.hidden = true; lbImg.removeAttribute("src");
+          lbVid.hidden = false; lbVid.poster = img(a.poster); lbVid.src = ROOT + "assets/" + a.video; lbVid.play().catch(() => {});
+        } else {
+          lbVid.pause(); lbVid.hidden = true; lbVid.removeAttribute("src");
+          lbImg.hidden = false; lbImg.src = img(a.src); lbImg.alt = a.title;
+        }
         cap.textContent = `${a.title} · ${a.kind}`;
         count.textContent = `${pad(cur + 1)} / ${pad(A.length)}`;
       };
+      const el = () => (lbImg.hidden ? lbVid : lbImg);
       if (dir && !REDUCED) {
-        lbImg.animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${-dir * 24}px)` }], { duration: 140, easing: "ease-in" }).onfinish = () => {
+        el().animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${-dir * 24}px)` }], { duration: 140, easing: "ease-in" }).onfinish = () => {
           swap();
-          const go = () => lbImg.animate([{ opacity: 0, transform: `translateX(${dir * 24}px)` }, { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "ease-out" });
-          lbImg.complete ? go() : lbImg.addEventListener("load", go, { once: true });
+          const go = () => el().animate([{ opacity: 0, transform: `translateX(${dir * 24}px)` }, { opacity: 1, transform: "translateX(0)" }], { duration: 220, easing: "ease-out" });
+          a.video || lbImg.complete ? go() : lbImg.addEventListener("load", go, { once: true });
         };
       } else swap();
-      [cur - 1, cur + 1].forEach((j) => { const n = A[(j + A.length) % A.length]; if (n) new Image().src = img(n.src); });
+      [cur - 1, cur + 1].forEach((j) => { const n = A[(j + A.length) % A.length]; if (n && !n.video) new Image().src = img(n.src); });
     };
     $$(".a-item").forEach((b) => b.addEventListener("click", () => {
       opener = b;

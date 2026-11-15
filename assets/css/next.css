@@ -390,8 +390,8 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
 .a-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px 18px; padding: 0 var(--gutter) 16vh; position: relative; z-index: 7; }
 .a-item { display: block; width: 100%; text-align: left; }
 .a-item .frame { aspect-ratio: 1; overflow: hidden; }
-.a-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease-out); }
-.a-item:hover img { transform: scale(1.03); }
+.a-item img, .a-item video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.9s var(--ease-out); }
+.a-item:hover img, .a-item:hover video { transform: scale(1.03); }
 .a-item figcaption { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0 0; }
 .a-item figcaption b { font-weight: 400; font-size: 16px; }
 .a-item figcaption .mono { color: var(--ash); }
@@ -402,7 +402,8 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
   opacity: 0; pointer-events: none; transition: opacity 0.35s;
 }
 .lightbox.is-open { opacity: 1; pointer-events: auto; }
-.lightbox img { max-height: calc(100vh - 140px); max-width: calc(100vw - 2 * var(--gutter) - 200px); width: auto; }
+.lightbox img, .lightbox video { max-height: calc(100vh - 140px); max-width: calc(100vw - 2 * var(--gutter) - 200px); width: auto; }
+.lightbox [hidden] { display: none; }
 .lightbox__close { position: absolute; top: 24px; right: var(--gutter); }
 .lightbox__close:hover { color: var(--pink); }
 .lightbox__cap { position: absolute; bottom: 24px; left: var(--gutter); color: var(--ash); }
@@ -557,7 +558,7 @@ html[data-lights="on"] .px-noa__line { fill: transparent; }
    SMALL SCREENS
    ============================================================ */
 @media (max-width: 760px) {
-  .lightbox img { max-width: 100%; max-height: calc(100vh - 190px); }
+  .lightbox img, .lightbox video { max-width: 100%; max-height: calc(100vh - 190px); }
   .lightbox__nav { top: auto; bottom: 58px; transform: none; }
   .lightbox__nav--prev:hover, .lightbox__nav--next:hover { transform: none; }
   .hero { --cm: 1.75vw; }
