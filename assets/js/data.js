@@ -141,9 +141,8 @@ window.PROJECTS = [
 ];
 
 window.ARCHIVE = [
-  { video: "video/archive/ghoulette.mp4", preview: "video/archive/preview/ghoulette.mp4", poster: "ghoulette-poster.jpg", title: "Ghoulette", kind: "Character loop" },
-  { video: "video/archive/dead-internet.mp4", preview: "video/archive/preview/dead-internet.mp4", poster: "dead-internet-poster.jpg", title: "Dead Internet", kind: "Kinetic type" },
-  { video: "video/archive/mercury.mp4", preview: "video/archive/preview/mercury.mp4", poster: "mercury-poster.jpg", title: "Mercury", kind: "Generative loop" },
+  { video: "video/archive/dead-internet.mp4", preview: "video/archive/preview/dead-internet.mp4", poster: "dead-internet-poster.jpg", title: "Dead Internet", kind: "Motion graphics" },
+  { video: "video/archive/mercury.mp4", preview: "video/archive/preview/mercury.mp4", poster: "mercury-poster.jpg", title: "Mercury", kind: "Motion graphics" },
   { src: "print-1.jpg", title: "Afterlife", kind: "Poster" },
   { src: "print-2.jpg", thumb: "print-2-sq.jpg", title: "Nice Genes Bro", kind: "Apparel print" },
   { src: "print-3.jpg", title: "Crayola", kind: "Poster" },
