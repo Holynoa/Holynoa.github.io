@@ -141,6 +141,7 @@ window.PROJECTS = [
 ];
 
 window.ARCHIVE = [
+  { video: "video/archive/chatter.mp4", preview: "video/archive/preview/chatter.mp4", poster: "chatter-poster.jpg", title: "Chatter", kind: "3D motion" },
   { video: "video/archive/click.mp4", preview: "video/archive/preview/click.mp4", poster: "click-poster.jpg", title: "Click", kind: "Motion graphics" },
   { video: "video/archive/dead-internet.mp4", preview: "video/archive/preview/dead-internet.mp4", poster: "dead-internet-poster.jpg", title: "Dead Internet", kind: "Motion graphics" },
   { video: "video/archive/mercury.mp4", preview: "video/archive/preview/mercury.mp4", poster: "mercury-poster.jpg", title: "Mercury", kind: "Motion graphics" },
