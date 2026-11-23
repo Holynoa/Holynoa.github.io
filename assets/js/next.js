@@ -723,6 +723,7 @@
     const pix = $(".hero__hint i");
     if (pix) {
       pix.addEventListener("click", (e) => { e.stopPropagation(); if (!busy()) toy("paint"); });
+      pix.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !busy()) { e.preventDefault(); toy("paint"); } });
     }
     // or type the name of the program
     let typed = "";
@@ -836,7 +837,7 @@
         <div class="hero__field"></div>
         <h1 class="hero__title">Holynoa</h1>
         <p class="hero__intro">Noa Yaakobovitz is a chronically online graphic designer working across branding, motion and&nbsp;interfaces.</p>
-        <span class="hero__hint mono"><i></i>${FINE ? "hover to look, click to open" : "scroll for the index"}</span>
+        <span class="hero__hint"><i role="button" tabindex="0" aria-label="Open the paint program" title="paint"></i></span>
       </section>
       <section class="index" id="index" aria-label="Index">
         <div class="index__head mono"><span>Index</span><span>${pad(P.length)} works, 2023 to 2025</span></div>
