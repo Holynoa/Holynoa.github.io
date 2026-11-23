@@ -1056,7 +1056,7 @@
             <button class="a-item" type="button" data-i="${i}" data-cursor="look">
               <figure style="margin:0">
                 <div class="frame">${a.video
-                  ? `<video src="${ROOT}assets/${a.preview || a.video}" poster="${img(a.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(a.title)}"></video>`
+                  ? `<video src="${ROOT}assets/${a.preview || a.video}" poster="${img(a.tile || a.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(a.title)}"></video>`
                   : `<img src="${img(a.thumb || a.src)}" alt="${esc(a.title)}" loading="lazy"${a.pos ? ` style="object-position:${a.pos}"` : ""}>`}</div>
                 <figcaption><b>${esc(a.title)}</b><span class="mono">${esc(a.kind)}</span></figcaption>
               </figure>

@@ -608,3 +608,11 @@ html[data-lights="on"] .px-noa__line { fill: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .grain, .hero__hint i, .crt i, body { animation: none !important; }
 }
+
+/* archive: the pieces sit above the screen texture. Grain and scanlines stay on the page, never on the work */
+.page:has(> .a-grid) { z-index: auto; }
+.a-head { z-index: 7; }
+.a-grid { z-index: auto; }
+.a-item figcaption { position: relative; z-index: 7; }
+.a-item .frame { position: relative; z-index: 42; }
+body:has(.a-grid) .site-header { z-index: 44; }
