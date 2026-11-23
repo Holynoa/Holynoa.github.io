@@ -409,6 +409,10 @@ html[data-lights="on"] .p-media__frame { background: transparent; }
 .lightbox__close:hover { color: var(--pink); }
 .lightbox__cap { position: absolute; bottom: 24px; left: var(--gutter); color: var(--ash); }
 .lightbox__count { position: absolute; bottom: 24px; right: var(--gutter); color: var(--ash); }
+.lightbox__view { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; color: var(--ash); }
+.lightbox__view button { font: inherit; text-transform: inherit; letter-spacing: inherit; color: var(--ash); padding: 8px 2px; margin: -8px 0; transition: color 0.2s; }
+.lightbox__view button:hover { color: var(--bone); }
+.lightbox__view button.is-on { color: var(--pink); }
 .lightbox__nav { position: absolute; top: 50%; transform: translateY(-50%); padding: 14px 6px; color: var(--bone); transition: color 0.2s, transform 0.25s var(--ease-out); z-index: 1; }
 .lightbox__nav--prev { left: var(--gutter); }
 .lightbox__nav--next { right: var(--gutter); }
@@ -570,7 +574,8 @@ html[data-lights="on"] .px-noa__line { fill: transparent; }
   .brand { font-size: 18px; }
   .hero { --tf: 19vw; }
   .hero__intro { font-size: 15px; width: 80vw; }
-  .hero__hint i::after { inset: -18px; }   /* a finger-sized target on touch screens */
+  .hero__hint i::after { inset: -18px; }
+  .lightbox__view { bottom: 124px; }   /* a finger-sized target on touch screens */
   .callout__name { font-size: 24px; }
   .callout__txt { max-width: 46vw; }
   .index__row { grid-template-columns: 34px 1fr 50px; gap: 12px; }

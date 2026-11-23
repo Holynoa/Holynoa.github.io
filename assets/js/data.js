@@ -141,7 +141,7 @@ window.PROJECTS = [
 ];
 
 window.ARCHIVE = [
-  { video: "video/archive/greener-grass.mp4", preview: "video/archive/preview/greener-grass.mp4", poster: "greener-grass-poster.jpg", tile: "greener-grass-tile.jpg", title: "Greener Grass", kind: "3D motion" },
+  { video: "video/archive/greener-grass.mp4", preview: "video/archive/preview/greener-grass.mp4", poster: "greener-grass-poster.jpg", tile: "greener-grass-tile.jpg", wire: "video/archive/greener-grass-wire.mp4", title: "Greener Grass", kind: "3D motion" },
   { video: "video/archive/click.mp4", preview: "video/archive/preview/click.mp4", poster: "click-poster.jpg", title: ".01", kind: "Motion graphics" },
   { video: "video/archive/dead-internet.mp4", preview: "video/archive/preview/dead-internet.mp4", poster: "dead-internet-poster.jpg", title: ".02", kind: "Motion graphics" },
   { video: "video/archive/mercury.mp4", preview: "video/archive/preview/mercury.mp4", poster: "mercury-poster.jpg", title: ".03", kind: "Motion graphics" },

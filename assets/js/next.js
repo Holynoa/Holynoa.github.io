@@ -1072,6 +1072,7 @@
         <button class="lightbox__nav lightbox__nav--next mono" type="button" aria-label="Next piece">Next →</button>
         <span class="lightbox__cap mono"></span>
         <span class="lightbox__count mono" aria-live="polite"></span>
+        <div class="lightbox__view mono" role="group" aria-label="View" hidden><button type="button" data-v="final">Render + grade</button><span aria-hidden="true">/</span><button type="button" data-v="wire">Wire</button></div>
       </div>`;
     stage = $(".a-head");
     $(".a-head__obj").appendChild(makeObj(S.archiveObj, { x: 72, y: 52, rot: -4, depth: 1, k: 1.9, amp: 1.2 }).el);
@@ -1079,6 +1080,18 @@
     $$(".a-item .frame").forEach(reveal);
 
     const lb = $(".lightbox"), lbImg = $("img", lb), lbVid = $("video", lb), cap = $(".lightbox__cap", lb), count = $(".lightbox__count", lb);
+    // 3D pieces can flip between the finished render and the wireframe of the same loop, at the same moment
+    const view = $(".lightbox__view", lb);
+    const setView = (v, keepTime) => {
+      const a = A[cur]; if (!a.wire) return;
+      const t = keepTime ? lbVid.currentTime : 0;
+      $$("button", view).forEach((b) => { const on = b.dataset.v === v; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
+      if (keepTime) lbVid.removeAttribute("poster");
+      lbVid.src = ROOT + "assets/" + (v === "wire" ? a.wire : a.video);
+      if (keepTime) lbVid.addEventListener("loadedmetadata", () => { lbVid.currentTime = t; }, { once: true });
+      lbVid.play().catch(() => {});
+    };
+    $$("button", view).forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (!b.classList.contains("is-on")) setView(b.dataset.v, true); }));
     let opener = null, cur = 0;
     const isOpen = () => lb.classList.contains("is-open");
     const close = () => { lb.classList.remove("is-open"); lbVid.pause(); opener && opener.focus(); };
@@ -1090,8 +1103,10 @@
         if (a.video) {
           lbImg.hidden = true; lbImg.removeAttribute("src");
           lbVid.hidden = false; lbVid.poster = img(a.poster); lbVid.src = ROOT + "assets/" + a.video; lbVid.play().catch(() => {});
+          view.hidden = !a.wire;
+          if (a.wire) { setView("final", false); const pre = document.createElement("video"); pre.preload = "auto"; pre.muted = true; pre.src = ROOT + "assets/" + a.wire; }
         } else {
-          lbVid.pause(); lbVid.hidden = true; lbVid.removeAttribute("src");
+          lbVid.pause(); lbVid.hidden = true; lbVid.removeAttribute("src"); view.hidden = true;
           lbImg.hidden = false; lbImg.src = img(a.src); lbImg.alt = a.title;
         }
         cap.textContent = `${a.title} · ${a.kind}`;
