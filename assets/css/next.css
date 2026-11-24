@@ -196,6 +196,8 @@ body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
    ============================================================ */
 .hero { --cm: min(0.78vw, 1.38vh); --tf: min(15vw, 27vh); position: relative; height: 100vh; height: 100svh; min-height: 560px; overflow: hidden; }
 .hero__field { position: absolute; inset: 0; z-index: 2; }
+/* iOS Safari only sends taps as clicks from areas it thinks are clickable; this marks the object field as one */
+@media (hover: none) { .hero__field { cursor: pointer; -webkit-tap-highlight-color: transparent; } }
 /* clicking the title over and over must never select the objects behind it */
 .hero__field, .hero__title { -webkit-user-select: none; user-select: none; }
 .hero__field img { -webkit-user-drag: none; }

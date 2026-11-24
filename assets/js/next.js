@@ -852,6 +852,7 @@
       </section>`;
 
     const hero = $(".hero"), field = $(".hero__field");
+    field.addEventListener("click", () => {});   // iOS: a listener here makes taps on the objects reach the click handler
     stage = hero;
     ORB.el = hero;
     makeCallout(hero);
