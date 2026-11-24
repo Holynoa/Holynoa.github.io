@@ -686,7 +686,7 @@
     x.putImageData(d, 0, 0);
     const grain = h(`<div class="grain" aria-hidden="true"></div>`);
     grain.style.backgroundImage = `url(${c.toDataURL()})`;
-    document.body.append(darkEl, grain, h(`<div class="crt" aria-hidden="true"><i></i></div>`));
+    document.body.append(darkEl, grain, h(`<div class="crt" aria-hidden="true"><i></i><b></b></div>`));
   }
 
   /* two hidden toys. destroy.exe: hit the big HOLYNOA title five times in a row.
@@ -1069,6 +1069,9 @@
         <button class="lightbox__nav lightbox__nav--prev mono" type="button" aria-label="Previous piece">← Prev</button>
         <img alt="">
         <video muted loop playsinline hidden></video>
+        <video class="lightbox__wv" muted loop playsinline preload="none" hidden aria-hidden="true"></video>
+        <canvas class="lightbox__cv" width="1920" height="1080" hidden aria-hidden="true"></canvas>
+        <canvas class="lightbox__wire" width="1920" height="1080" hidden aria-hidden="true"></canvas>
         <button class="lightbox__nav lightbox__nav--next mono" type="button" aria-label="Next piece">Next →</button>
         <span class="lightbox__cap mono"></span>
         <span class="lightbox__count mono" aria-live="polite"></span>
@@ -1082,19 +1085,52 @@
     const lb = $(".lightbox"), lbImg = $("img", lb), lbVid = $("video", lb), cap = $(".lightbox__cap", lb), count = $(".lightbox__count", lb);
     // 3D pieces can flip between the finished render and the wireframe of the same loop, at the same moment
     const view = $(".lightbox__view", lb);
-    const setView = (v, keepTime) => {
-      const a = A[cur]; if (!a.wire) return;
-      const t = keepTime ? lbVid.currentTime : 0;
-      $$("button", view).forEach((b) => { const on = b.dataset.v === v; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
-      if (keepTime) lbVid.removeAttribute("poster");
-      lbVid.src = ROOT + "assets/" + (v === "wire" ? a.wire : a.video);
-      if (keepTime) lbVid.addEventListener("loadedmetadata", () => { lbVid.currentTime = t; }, { once: true });
-      lbVid.play().catch(() => {});
+    // videos play underneath, invisible; what you see are two canvases that only ever get real decoded frames,
+    // so when a loop wraps and the browser has a gap, the last good frame stays up instead of a black flash
+    const wire = $(".lightbox__wv", lb), cv = $(".lightbox__cv", lb), wcv = $(".lightbox__wire", lb);
+    const cx = cv.getContext("2d"), wcx = wcv.getContext("2d");
+    const lastT = new Map();
+    const draw = (vid, c, ctx) => {
+      if (vid.readyState < 2 || vid.seeking || !vid.videoWidth) return;
+      if (lastT.get(vid) === vid.currentTime) return;
+      lastT.set(vid, vid.currentTime);
+      if (c.width !== vid.videoWidth) { c.width = vid.videoWidth; c.height = vid.videoHeight; }
+      ctx.drawImage(vid, 0, 0, c.width, c.height);
     };
-    $$("button", view).forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (!b.classList.contains("is-on")) setView(b.dataset.v, true); }));
+    const tick = () => {
+      if (lb.classList.contains("is-open") && !cv.hidden) { draw(lbVid, cv, cx); if (!wcv.hidden) draw(wire, wcv, wcx); }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    let wireOn = false;
+    const sync = () => {
+      const D = lbVid.duration || 4; let d = (wire.currentTime - lbVid.currentTime) % D;
+      if (d > D / 2) d -= D; if (d < -D / 2) d += D;   // one of them may have just wrapped around
+      // small drift is eased out by nudging the speed; only a big one gets a hard seek
+      if (Math.abs(d) > 0.3) { wire.currentTime = lbVid.currentTime; wire.playbackRate = 1; }
+      else wire.playbackRate = Math.abs(d) < 0.02 ? 1 : d > 0 ? 0.92 : 1.08;
+    };
+    const mark = (v) => $$("button", view).forEach((b) => { const on = b.dataset.v === v; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
+    const setView = (v) => {
+      const on = v === "wire";
+      if (on === wireOn) return;
+      wireOn = on; mark(v);
+      if (on) {
+        wcv.hidden = false; lastT.delete(wire);
+        wire.currentTime = lbVid.currentTime; wire.playbackRate = 1; wire.play().catch(() => {});
+        // let the first synced frame land before the brush starts
+        const go = () => { if (!wireOn) return; draw(wire, wcv, wcx); void wcv.offsetWidth; wcv.classList.add("is-on"); };
+        wire.readyState >= 2 && !wire.seeking ? go() : wire.addEventListener(wire.seeking ? "seeked" : "loadeddata", go, { once: true });
+      } else wcv.classList.remove("is-on");
+    };
+    // keep the two loops locked together while the wire is showing
+    lbVid.addEventListener("timeupdate", () => { if (wireOn && !wire.seeking) sync(); });
+    wcv.addEventListener("transitionend", () => { if (!wireOn) { wire.pause(); wcv.hidden = true; } });
+    const resetWire = () => { wireOn = false; wcv.classList.remove("is-on"); wire.pause(); wcv.hidden = true; mark("final"); };
+    $$("button", view).forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); setView(b.dataset.v); }));
     let opener = null, cur = 0;
     const isOpen = () => lb.classList.contains("is-open");
-    const close = () => { lb.classList.remove("is-open"); lbVid.pause(); opener && opener.focus(); };
+    const close = () => { lb.classList.remove("is-open"); lbVid.pause(); resetWire(); opener && opener.focus(); };
     // show piece i; the neighbours load quietly in the background so flipping feels instant
     const show = (i, dir = 0) => {
       cur = (i + A.length) % A.length;
@@ -1102,17 +1138,19 @@
       const swap = () => {
         if (a.video) {
           lbImg.hidden = true; lbImg.removeAttribute("src");
-          lbVid.hidden = false; lbVid.poster = img(a.poster); lbVid.src = ROOT + "assets/" + a.video; lbVid.play().catch(() => {});
-          view.hidden = !a.wire;
-          if (a.wire) { setView("final", false); const pre = document.createElement("video"); pre.preload = "auto"; pre.muted = true; pre.src = ROOT + "assets/" + a.wire; }
+          lbVid.hidden = false; lbVid.poster = img(a.poster); cv.hidden = false; lastT.delete(lbVid);
+          { const pi = new Image(); pi.onload = () => { if (lastT.has(lbVid)) return; cx.drawImage(pi, 0, 0, cv.width, cv.height); }; pi.src = img(a.poster); }   // poster until the first frame
+          lbVid.src = ROOT + "assets/" + a.video; lbVid.play().catch(() => {});
+          view.hidden = !a.wire; resetWire();
+          if (a.wire) { wire.src = ROOT + "assets/" + a.wire; wire.preload = "auto"; wire.load(); } else wire.removeAttribute("src");
         } else {
-          lbVid.pause(); lbVid.hidden = true; lbVid.removeAttribute("src"); view.hidden = true;
+          lbVid.pause(); lbVid.hidden = true; cv.hidden = true; lbVid.removeAttribute("src"); view.hidden = true; resetWire(); wire.removeAttribute("src");
           lbImg.hidden = false; lbImg.src = img(a.src); lbImg.alt = a.title;
         }
         cap.textContent = `${a.title} · ${a.kind}`;
         count.textContent = `${pad(cur + 1)} / ${pad(A.length)}`;
       };
-      const el = () => (lbImg.hidden ? lbVid : lbImg);
+      const el = () => (lbImg.hidden ? cv : lbImg);
       if (dir && !REDUCED) {
         el().animate([{ opacity: 1, transform: "translateX(0)" }, { opacity: 0, transform: `translateX(${-dir * 24}px)` }], { duration: 140, easing: "ease-in" }).onfinish = () => {
           swap();
